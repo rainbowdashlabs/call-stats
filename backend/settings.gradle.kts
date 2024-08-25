@@ -10,7 +10,7 @@ dependencyResolutionManagement {
             library("sadu-datasource", "de.chojo.sadu", "sadu-datasource").versionRef("sadu")
             bundle("sadu", listOf("sadu-postgresql", "sadu-updater", "sadu-queries", "sadu-datasource"))
 
-            version("javalin", "6.2.0")
+            version("javalin", "6.3.0")
             library("javalin-bundle", "io.javalin", "javalin-bundle").versionRef("javalin")
             library("javalin-openapi", "io.javalin.community.openapi", "javalin-openapi-plugin").versionRef("javalin")
             library("javalin-swagger", "io.javalin.community.openapi", "javalin-swagger-plugin").versionRef("javalin")
