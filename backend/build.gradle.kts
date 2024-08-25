@@ -20,7 +20,7 @@ dependencies {
     implementation(libs.bundles.javalin)
     implementation(libs.postgres)
     annotationProcessor(libs.javalin.openapiannotation)
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation(platform("org.junit:junit-bom:5.11.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
