@@ -17,7 +17,7 @@ dependencyResolutionManagement {
             library("javalin-openapiannotation", "io.javalin.community.openapi", "openapi-annotation-processor").versionRef("javalin")
             bundle("javalin", listOf("javalin-bundle", "javalin-openapi", "javalin-swagger"))
 
-            library("postgres","org.postgresql:postgresql:42.7.3")
+            library("postgres","org.postgresql:postgresql:42.7.4")
         }
     }
 }
