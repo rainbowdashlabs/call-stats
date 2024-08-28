@@ -1,5 +1,6 @@
 package de.chojo.callstats.services;
 
+import de.chojo.callstats.configuration.security.Role;
 import de.chojo.callstats.data.Repositories;
 import de.chojo.callstats.entites.User;
 import de.chojo.callstats.repositories.UserRepository;
@@ -7,6 +8,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class UserService {
     private final PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -20,8 +22,8 @@ public class UserService {
         return passwordEncoder.encode(password);
     }
 
-    public void createUser(User user) {
-        userRepository.save(new User(null, user.name(), encodePassword(user.password()), user.enabled(), user.roles()));
+    public User createUser(User user) {
+        return userRepository.save(new User(null, user.name(), encodePassword(user.password()), user.enabled(), Set.of(Role.USER, Role.USER_READ)));
     }
 
     public Optional<User> authUser(String username, String password) {

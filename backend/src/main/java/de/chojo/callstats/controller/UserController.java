@@ -4,6 +4,7 @@ import de.chojo.callstats.configuration.security.Role;
 import de.chojo.callstats.entites.User;
 import de.chojo.callstats.services.UserService;
 import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -21,7 +22,7 @@ public class UserController implements RestController {
     @Override
     public void routes() {
         path("user", () -> {
-            get("me", this::me, Role.ANYONE);
+            get("me", this::me, Role.USER);
             post(this::createUser, Role.ADMIN);
             delete(this::deleteUser, Role.ADMIN);
             patch(this::update, Role.ADMIN);
@@ -38,7 +39,9 @@ public class UserController implements RestController {
 
     private void createUser(Context ctx) {
         User user = ctx.bodyAsClass(User.class);
-        userService.createUser(user);
+        User created = userService.createUser(user);
+        ctx.status(HttpStatus.ACCEPTED);
+        ctx.json(created);
     }
 
     private void me(Context ctx) {
