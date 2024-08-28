@@ -3,7 +3,7 @@ rootProject.name = "backend"
 dependencyResolutionManagement {
     versionCatalogs {
         create("libs") {
-            version("sadu", "2.2.5")
+            version("sadu", "2.3.0")
             library("sadu-postgresql", "de.chojo.sadu", "sadu-postgresql").versionRef("sadu")
             library("sadu-updater", "de.chojo.sadu", "sadu-updater").versionRef("sadu")
             library("sadu-queries", "de.chojo.sadu", "sadu-queries").versionRef("sadu")
