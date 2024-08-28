@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import de.chojo.callstats.configuration.FileConfiguration;
+import de.chojo.callstats.configuration.file.elements.Security;
 import de.chojo.callstats.entites.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -22,7 +23,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 public class JwtService {
-        public static final Map<String, Object> LOGIN_CLAIM = Map.of("type", "login");
+    public static final Map<String, Object> LOGIN_CLAIM = Map.of("type", "login");
     public static final Map<String, Object> REFRESH_CLAIM = Map.of("type", "refresh");
 
     private final FileConfiguration fileConfiguration;
@@ -104,5 +105,13 @@ public class JwtService {
 
     private Key getSignInKey() {
         return Keys.hmacShaKeyFor(fileConfiguration.security().secretKey().getBytes());
+    }
+
+    public long jwtExpiration() {
+        return fileConfiguration.security().jwtExpiration();
+    }
+
+    public long jwtRefreshExpiration() {
+        return fileConfiguration.security().jwtRefreshExpiration();
     }
 }

@@ -29,6 +29,7 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.11.2")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2") // or 'io.jsonwebtoken:jjwt-gson:0.12.6' for gson
+    implementation("org.springframework.security", "spring-security-config", "6.3.3")
 
     annotationProcessor(libs.javalin.annotation)
 

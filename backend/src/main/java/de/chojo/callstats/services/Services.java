@@ -8,12 +8,14 @@ public class Services {
     private final CrewService crewService;
     private final ExerciseService exerciseService;
     private final JwtService jwtService;
+    private final UserService userService;
 
     public Services(Repositories repositories, FileConfiguration fileConfiguration) {
         callService = new CallService(repositories);
         crewService = new CrewService(repositories);
         exerciseService = new ExerciseService(repositories);
         jwtService = new JwtService(fileConfiguration);
+        userService = new UserService(repositories);
     }
 
     public CallService callService() {
@@ -30,5 +32,9 @@ public class Services {
 
     public JwtService jwtService() {
         return jwtService;
+    }
+
+    public UserService userService() {
+        return userService;
     }
 }

@@ -27,7 +27,7 @@ public class WebConfiguration {
                 new CallController(services.callService()),
                 new CrewController(services.crewService()),
                 new ExerciseController(services.exerciseService()),
-                new UserController());
+                new UserController(services.userService()));
         this.javalin = Javalin.create(this::configure)
                               .start(fileConfiguration.web().host(), fileConfiguration.web().port());
     }

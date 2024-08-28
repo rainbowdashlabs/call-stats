@@ -1,11 +1,17 @@
 CREATE UNIQUE INDEX exercise_crew_exercise_id_crew_id_uindex ON exercise_crew (exercise_id, crew_id);
-ALTER TABLE exercise_crew ADD PRIMARY KEY using index exercise_crew_exercise_id_crew_id_uindex;
+ALTER TABLE exercise_crew
+    ADD PRIMARY KEY USING INDEX exercise_crew_exercise_id_crew_id_uindex;
 
 CREATE UNIQUE INDEX call_crew_call_id_crew_id_uindex ON call_crew (call_id, crew_id);
-ALTER TABLE call_crew ADD PRIMARY KEY using index call_crew_call_id_crew_id_uindex;
+ALTER TABLE call_crew
+    ADD PRIMARY KEY USING INDEX call_crew_call_id_crew_id_uindex;
 
-ALTER TABLE qualifications ADD COLUMN since DATE DEFAULT now()::DATE;
-UPDATE qualifications SET since = '2020-01-01'::DATE WHERE TRUE;
+ALTER TABLE qualifications
+    ADD COLUMN since DATE DEFAULT now()::DATE;
+UPDATE qualifications
+SET
+    since = '2020-01-01'::DATE
+WHERE TRUE;
 
 CREATE OR REPLACE VIEW call_meta
         (call_id, call, duration, call_type, abort_reason, note, strength, strength_slim, additional_crew, leader,
@@ -16,12 +22,12 @@ AS
         crew_meta AS (
             SELECT
                 cc.call_id,
-                ca.start_timestamp                                                         AS call,
-                count(1) FILTER (WHERE NOT cc.additional)                                  AS strength,
-                count(1) FILTER (WHERE cc.additional)                                      AS additional_crew,
+                ca.start_timestamp                                                                           AS call,
+                count(1) FILTER (WHERE NOT cc.additional)                                                    AS strength,
+                count(1) FILTER (WHERE cc.additional)                                                        AS additional_crew,
                 coalesce(bool_or('Staffelführer' = q.qualification AND q.since < ca.start_timestamp), FALSE) AS leader,
                 coalesce(bool_or('Maschinist' = q.qualification AND q.since < ca.start_timestamp), FALSE)    AS driver,
-                array_agg(DISTINCT cr.name)                                                         AS crew_names
+                array_agg(DISTINCT cr.name)                                                                  AS crew_names
             FROM
                 call_crew cc
                     LEFT JOIN crew cr
@@ -77,3 +83,17 @@ AS
     FROM
         call_meta
     ORDER BY call_meta.call;
+
+CREATE TABLE users (
+    id       SERIAL PRIMARY KEY,
+    name     TEXT NOT NULL,
+    password TEXT NOT NULL,
+    enabled  BOOLEAN DEFAULT FALSE
+);
+
+CREATE UNIQUE INDEX users_name_uindex ON users (lower(name));
+
+CREATE TABLE user_roles (
+    user_id INTEGER,
+    role    TEXT
+)
