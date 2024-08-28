@@ -29,9 +29,9 @@ FROM
 WHERE cc.call = c.start_timestamp;
 
 ALTER TABLE call_crew
-    DROP COLUMN name;
+    DROP COLUMN name CASCADE;
 ALTER TABLE call_crew
-    DROP COLUMN call;
+    DROP COLUMN call CASCADE;
 
 ALTER TABLE exercise_crew
     ADD exercise_id SERIAL;
@@ -54,9 +54,9 @@ FROM
 WHERE ec.exercise = e.date;
 
 ALTER TABLE exercise_crew
-    DROP COLUMN name;
+    DROP COLUMN name CASCADE;
 ALTER TABLE exercise_crew
-    DROP COLUMN exercise;
+    DROP COLUMN exercise CASCADE;
 
 ALTER TABLE qualifications
     ADD crew_id INTEGER;
@@ -69,10 +69,10 @@ FROM
 WHERE q.name = e.name;
 
 ALTER TABLE qualifications
-    DROP COLUMN name;
+    DROP COLUMN name CASCADE;
 
 
-DROP VIEW calls_clean CASCADE;
+DROP VIEW IF EXISTS calls_clean CASCADE;
 CREATE OR REPLACE VIEW calls_clean
         (id, start_timestamp, end_timestamp, duration, call_type, abort_reason, note, at_station) AS
     SELECT
@@ -362,18 +362,19 @@ CREATE OR REPLACE VIEW crew_time_total_year
             ON t.year = e.year AND t.name = e.name
     ORDER BY t.year, t.name;
 
-DROP VIEW crew_qualifications CASCADE;
+DROP VIEW IF EXISTS crew_qualifications CASCADE;
 CREATE OR REPLACE VIEW crew_qualifications(crew_id, name, qualifications) AS
     SELECT
+        crew_id,
         c.name,
         array_agg(q.qualification) AS qualifications
     FROM
         qualifications q
             LEFT JOIN crew c
             ON q.crew_id = c.id
-    GROUP BY c.name;
+    GROUP BY crew_id, c.name;
 
-DROP VIEW call_meta CASCADE;
+DROP VIEW IF EXISTS call_meta CASCADE;
 CREATE OR REPLACE VIEW call_meta
         (call_id, call, duration, call_type, abort_reason, note, strength, strength_slim, additional_crew, leader,
          driver,
@@ -402,6 +403,7 @@ AS
                      ),
         call_meta AS (
             SELECT
+                id,
                 c.start_timestamp                      AS call,
                 c.duration,
                 c.call_type,
@@ -419,6 +421,7 @@ AS
                     ON c.start_timestamp = m.call
                      )
     SELECT
+        call_meta.id,
         call_meta.call,
         call_meta.duration,
         call_meta.call_type,
