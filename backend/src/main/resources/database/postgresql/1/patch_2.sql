@@ -96,4 +96,10 @@ CREATE UNIQUE INDEX users_name_uindex ON users (lower(name));
 CREATE TABLE user_roles (
     user_id INTEGER,
     role    TEXT
-)
+);
+
+CREATE TABLE user_session (
+    user_id     INTEGER,
+    token       TEXT,
+    valid_until TIMESTAMP
+);

@@ -15,7 +15,7 @@ public class Services {
         crewService = new CrewService(repositories);
         exerciseService = new ExerciseService(repositories);
         jwtService = new JwtService(fileConfiguration);
-        userService = new UserService(repositories);
+        userService = new UserService(repositories, this);
     }
 
     public CallService callService() {

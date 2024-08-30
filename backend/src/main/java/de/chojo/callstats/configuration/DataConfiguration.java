@@ -24,6 +24,7 @@ public class DataConfiguration {
     public DataConfiguration(FileConfiguration fileConfiguration) throws SQLException, IOException {
         this.fileConfiguration = fileConfiguration;
         initDatasource();
+        initRepository();
     }
 
     private void initDatasource() throws SQLException, IOException {
