@@ -26,7 +26,7 @@ dependencies {
     implementation(libs.bundles.javalin)
     implementation(libs.postgres)
     implementation(libs.bundles.foundation)
-    implementation("io.jsonwebtoken:jjwt-api:0.11.2")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.2")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.2") // or 'io.jsonwebtoken:jjwt-gson:0.12.6' for gson
     implementation("org.springframework.security", "spring-security-config", "6.3.3")
