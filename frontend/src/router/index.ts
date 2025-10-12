@@ -5,22 +5,27 @@ const routes: RouteRecordRaw[] = [
   { path: '/', redirect: '/calls' },
   {
     path: '/calls',
-    name: 'calls',
+    name: 'Calls',
     component: () => import('../views/CallsView.vue'),
   },
   {
-    path: '/training',
-    name: 'training',
-    component: () => import('../views/TrainingView.vue'),
+    path: '/calls/subjects',
+    name: 'Subjects',
+    component: () => import('../views/calls/SubjectsView.vue'),
+  },
+  {
+    path: '/exercise',
+    name: 'Exercise',
+    component: () => import('../views/ExerciseView.vue'),
   },
   {
     path: '/youth',
-    name: 'youth',
-    component: () => import('../views/YouthView.vue'),
+    name: 'Youth Exercise',
+    component: () => import('../views/YouthExerciseView.vue'),
   },
   {
     path: '/members',
-    name: 'members',
+    name: 'Members',
     component: () => import('../views/MembersView.vue'),
   },
 ]

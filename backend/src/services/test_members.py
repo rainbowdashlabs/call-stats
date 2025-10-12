@@ -2,8 +2,8 @@ from unittest import TestCase
 
 from entities.member import Member
 from services.extra.errors import NotFoundError
-from services.members import create
 from services.member import search, delete, update, get_by_id
+from services.members import create
 
 
 class MembersTest(TestCase):

@@ -1,4 +1,4 @@
-from sqlmodel import create_engine, SQLModel
+from sqlmodel import create_engine, SQLModel, Session
 
 
 def new_engine():
@@ -16,5 +16,11 @@ import entities.member
 import entities.exercise
 # noinspection PyUnusedImports
 import entities.youth
+# noinspection PyUnusedImports
+import entities.qualification
 
 SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session:
+        yield session

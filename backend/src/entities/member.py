@@ -20,8 +20,11 @@ class Member(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(default=None)
     active: bool = Field(default=True)
-    qualifications: list[MemberQualification] = Relationship(back_populates="member", cascade_delete=True)
-    calls: list["Call"] = Relationship(back_populates="members", link_model=CallMember, cascade_delete=True)
-    youth_exercise: list["YouthTraining"] = Relationship(back_populates="instructors", link_model=MemberYouthExercise,
-                                                         cascade_delete=True)
-    exercises: list["Exercise"] = Relationship(back_populates="members", link_model=MemberExercise, cascade_delete=True)
+    qualifications: list[MemberQualification] = Relationship(back_populates="member",
+                                                             cascade_delete=True)
+    calls: list["Call"] = Relationship(back_populates="members",
+                                       link_model=CallMember)
+    youth_exercise: list["YouthExercise"] = Relationship(back_populates="instructors",
+                                                         link_model=MemberYouthExercise)
+    exercises: list["Exercise"] = Relationship(back_populates="members",
+                                               link_model=MemberExercise)

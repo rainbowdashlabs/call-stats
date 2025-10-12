@@ -14,5 +14,4 @@ class YouthExercise(SQLModel, table=True):
     date: datetime.date = Field(default=None)
     duration: int = Field(default=None)
     participants: int = Field(default=None)
-    instructors: list["Member"] = Relationship(back_populates="youth_exercise", link_model=MemberYouthExercise,
-                                               cascade_delete=True)
+    instructors: list["Member"] = Relationship(back_populates="youth_exercise", link_model=MemberYouthExercise)

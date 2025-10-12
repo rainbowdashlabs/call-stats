@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import router from "../router";
+import CreateCall from "../components/calls/create/CreateCall.vue";
 </script>
 
 <template>
   <section>
-    <h1>Calls</h1>
-    <p>Welcome to the Calls page.</p>
+    <button @click="router.push({path: '/calls/subjects'}) ">Subjects</button>
+
+    <CreateCall/>
   </section>
 </template>

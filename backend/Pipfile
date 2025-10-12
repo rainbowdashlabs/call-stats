@@ -8,6 +8,9 @@ pydantic = "*"
 sqlmodel = "*"
 psycopg = {extras = ["binary", "pool"], version = "*"}
 fastapi = {extras = ["standard"], version = "*"}
+requests = "*"
+pydantic-settings = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
