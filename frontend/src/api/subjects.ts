@@ -3,9 +3,14 @@ import {getHttpClient} from './http'
 
 const http = getHttpClient()
 
-export async function listSubjects(): Promise<MultiSelectGroup[]> {
-    const {data} = await http.get<MultiSelectGroup[]>('/api/subjects?grouped=true')
-    return data
+export async function listSubjects(grouped: boolean = true): Promise<MultiSelectGroup[] | Subject[]> {
+    if (grouped) {
+        const {data} = await http.get<Subject[]>('/api/subjects', {params: {grouped: grouped}})
+        return data
+    } else {
+        const {data} = await http.get<MultiSelectGroup[]>('/api/subjects', {params: {grouped: grouped}})
+        return data
+    }
 }
 
 export async function createSubject(subject: Subject): Promise<Subject> {
