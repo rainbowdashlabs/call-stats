@@ -8,6 +8,7 @@ from services.extra.errors import ExistsError, NotFoundError
 router = APIRouter(prefix="/members",
                    tags=["members"])
 
+
 @router.post("")
 def create(*, session: Session = Depends(get_session), member: Member) -> Member:
     statement = select(Member).where(Member.name == member.name)
@@ -27,7 +28,7 @@ def get_all(*, session: Session = Depends(get_session), filter_active: bool = Fa
     else:
         stmt = select(Member)
     result = session.exec(stmt).all()
-    return list(result)
+    return sorted(list(result), key=lambda x: x.name)
 
 
 @router.get("/search")

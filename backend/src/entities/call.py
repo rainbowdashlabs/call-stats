@@ -45,3 +45,43 @@ class CreateCall(BaseModel):
     abort_reason: Optional[str]
     note: Optional[str]
     members: list[int]
+
+class SimpleMember(BaseModel):
+    id: int
+    name: str
+
+    @staticmethod
+    def convert(member: "Member") -> "SimpleMember":
+        return SimpleMember(id=member.id,
+                      name=member.name)
+
+class SimpleSubject(BaseModel):
+    id: int
+    name: str
+    group: str
+
+    @staticmethod
+    def convert(subject: CallSubject) -> "SimpleSubject":
+        subject = subject.subject
+        return SimpleSubject(id=subject.id,
+                      name=subject.name,
+                      group=subject.group)
+
+class FullCall(BaseModel):
+    id: int
+    subjects: list[SimpleSubject]
+    start: datetime
+    end: datetime
+    abort_reason: Optional[str]
+    note: Optional[str]
+    members: list[SimpleMember]
+
+    @staticmethod
+    def convert(call: Call) -> "FullCall":
+        return FullCall(id=call.id,
+                 subjects=[SimpleSubject.convert(e) for e in call.subjects],
+                 members=[SimpleMember.convert(e) for e in call.members],
+                 start=call.start,
+                 end=call.end,
+                 abort_reason=call.abort_reason,
+                 note=call.note)
