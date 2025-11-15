@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 
 from data import get_session
 from entities.qualification import Qualification
-from services.extra.errors import NameExistsError, NotFoundError
+from services.extra.errors import NameExistsError, NotFoundError, IdChangeError
 from services.qualifications import get_by_name
 
 router = APIRouter(prefix="/qualification",
@@ -27,8 +27,10 @@ def delete(*, session: Session = Depends(get_session), id: int):
 
 
 @router.patch("/{id}")
-def update(*, session: Session = Depends(get_session), new: Qualification) -> Qualification:
-    old = get_by_id(session=session, id=new.id)
+def update(*, session: Session = Depends(get_session), id: int, new: Qualification) -> Qualification:
+    if id != new.id:
+        raise IdChangeError(Qualification)
+    old = get_by_id(session=session, id=id)
     if old.name != new.name:
         exists = get_by_name(session=session, name=new.name)
         if exists:

@@ -1,5 +1,5 @@
 export interface Member {
     id?: number
     name: string
-    active: boolean
+    active_until: Date | null
 }

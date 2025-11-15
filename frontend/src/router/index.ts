@@ -28,6 +28,16 @@ const routes: RouteRecordRaw[] = [
     name: 'Members',
     component: () => import('../views/MembersView.vue'),
   },
+  {
+    path: '/member/:id',
+    name: 'Member',
+    component: () => import('../views/MemberView.vue'),
+  },
+  {
+    path: '/theme',
+    name: 'Theme',
+    component: () => import('../views/Theme.vue'),
+  },
 ]
 
 const router = createRouter({

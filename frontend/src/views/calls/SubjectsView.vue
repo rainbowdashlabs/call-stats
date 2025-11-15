@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue'
 import SubjectForm from '../../components/subjects/SubjectForm.vue'
-import SubjectList from '../../components/subjects/SubjectList.vue'
-import type {Subject} from '../../interfaces/Subject'
+import type {MultiSelectGroup, Subject} from '../../interfaces/Subject'
 import {createSubject, deleteSubject, listSubjects, updateSubject} from '../../api/subjects'
+import Container from "../../components/base/container/Container.vue";
+import SubjectList from "../../components/subjects/SubjectList.vue";
 
-const subjects = ref<Subject[]>([])
+const subjects = ref<MultiSelectGroup[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -13,7 +14,7 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    subjects.value = await listSubjects()
+    subjects.value = await listSubjects(true) as MultiSelectGroup[]
   } catch (e: any) {
     error.value = e?.message ?? 'Failed to load subjects.'
   } finally {
@@ -24,7 +25,13 @@ async function load() {
 async function handleCreate(subject: Subject) {
   try {
     const created = await createSubject(subject)
-    subjects.value = [...subjects.value, created]
+    for (let group of subjects.value) {
+      if (group.label == created.group) {
+        group.items.push({label: created.name, value: created.id!})
+        break
+      }
+      subjects.value.push({label: created.group, items: [{label: created.name, value: created.id!}]})
+    }
   } catch (e: any) {
     alert(e?.message ?? 'Failed to create subject')
   }
@@ -50,11 +57,12 @@ async function handleDelete(id: number) {
 }
 
 onMounted(load)
+
 </script>
 
 <template>
-  <SubjectForm @create="handleCreate" />
-
+  <SubjectForm @create="handleCreate"/>
+  <SubjectList :subject_groups="subjects"/>
 </template>
 
 <style scoped>

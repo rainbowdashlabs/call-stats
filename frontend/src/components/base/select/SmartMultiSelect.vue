@@ -1,3 +1,4 @@
+
 <script setup lang="ts" generic="T">
 
 import {type PropType, ref} from "vue";
@@ -10,11 +11,11 @@ let props = defineProps({
     required: true
   },
   value_mapper: {
-    type: Object as PropType<(item: T) => string>,
+    type: Function as PropType<(item: T) => string>,
     required: true
   },
   key_mapper: {
-    type: Object as PropType<(item: T) => any>,
+    type: Function as PropType<(item: T) => any>,
     required: true
   },
   show_empty: {
@@ -32,6 +33,7 @@ if (props.show_empty) {
 }
 const term = ref('')
 const cursorItem = ref<T | null>(null)
+const showDropdown = ref(false)
 
 function keyDown(e: KeyboardEvent) {
   if (e.key === 'Enter') {
@@ -88,30 +90,53 @@ function remove(item: T) {
 
 function update() {
   currentMatches.value = select<T>(props.options, props.value_mapper, term.value, props.show_empty)
+  showDropdown.value = true
+}
+
+function onFocus() {
+  showDropdown.value = true
+  update()
+}
+
+function onBlur() {
+  // Delay to allow click events to register
+  setTimeout(() => {
+    showDropdown.value = false
+  }, 200)
 }
 
 </script>
 
 <template>
-
-  <div class="flex gap-1">
-    <StandardButton class="bg-gray-200" v-for="item in model" :key="props.key_mapper(item)" @click="_ => remove(item)">
-      {{ props.value_mapper(item) }}
-    </StandardButton>
-  </div>
-
-  <input type="text" v-model="term" @input="update" @keydown="keyDown" placeholder="search"
-         class="bg-gray-800 text-gray-50 w-full"/>
-
-  <div v-for="item in currentMatches" @click="() => add(item)" :key="props.key_mapper(item)">
-    <div v-if="cursorItem === item" class="bg-gray-600 text-gray-50">
-      {{ props.value_mapper(item) }}
+  <div>
+    <div class="flex gap-1">
+      <StandardButton class="bg-gray-200" v-for="item in model" :key="props.key_mapper(item)" @click="_ => remove(item)">
+        {{ props.value_mapper(item) }}
+      </StandardButton>
     </div>
-    <div v-else class="bg-gray-800 text-gray-50">
-      {{ props.value_mapper(item) }}
+
+    <div class="relative">
+      <input type="text" v-model="term" @input="update" @keydown="keyDown" @focus="onFocus" @blur="onBlur" placeholder="search"
+             class="bg-gray-800 text-gray-50 w-full"/>
+
+      <div v-if="showDropdown && currentMatches.length > 0"
+           class="absolute z-50 w-full mt-1 max-h-64 overflow-y-auto bg-gray-800 border border-gray-600 rounded shadow-lg">
+        <div v-for="item in currentMatches" @click="() =>// @ts-ignore
+         add(item)" :key="// @ts-ignore
+         props.key_mapper(item)"
+             class="cursor-pointer hover:bg-gray-700">
+          <div v-if="cursorItem === item" class="bg-gray-600 text-gray-50 px-3 py-2">
+            {{ // @ts-ignore
+              props.value_mapper(item) }}
+          </div>
+          <div v-else class="bg-gray-800 text-gray-50 px-3 py-2">
+            {{ // @ts-ignore
+              props.value_mapper(item) }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
 </template>
 
 <style scoped>

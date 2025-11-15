@@ -5,6 +5,10 @@ const http = getHttpClient()
 
 export async function listMembers(active: boolean = false): Promise<Member[]> {
     const {data} = await http.get<Member[]>('/api/members', {params: {active: active}})
-    console.log(data)
+    return data
+}
+
+export async function createMember(member: Member): Promise<Member> {
+    const {data} = await http.post<Member>('/api/members', member)
     return data
 }

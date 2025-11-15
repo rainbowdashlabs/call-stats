@@ -64,3 +64,4 @@ INSERT INTO member(name, active) VALUES ('Mark Young', true);
 INSERT INTO member(name, active) VALUES ('Sofia Hernandez', true);
 INSERT INTO member(name, active) VALUES ('Donald King', true);
 INSERT INTO member(name, active) VALUES ('Avery Wright', true);
+

@@ -5,6 +5,7 @@ from data import get_session
 from entities.member import MemberQualification
 from services.call import add_members as add_call_members, remove_members as remove_call_members
 from services.exercise import add_members as add_exercise_members, remove_members as remove_exercise_members
+from services.extra.errors import NotFoundError
 from services.member import get_by_id
 from services.youth_exercise import add_members as add_youth_exercise_members, \
     remove_members as remove_youth_exercise_members
@@ -16,20 +17,24 @@ router = APIRouter(prefix="/member",
 @router.post("/{member_id}/qualification")
 def add_qualification(*, session: Session = Depends(get_session), member_id: int, qualification: MemberQualification):
     member = get_by_id(session=session, id=member_id)
+    print(qualification)
     member.qualifications.append(qualification)
     session.add(member)
+    session.commit()
 
 
 @router.get("/{member_id}/qualifications")
-def get_qualifications(*, session: Session = Depends(get_session), member_id: int):
+def get_qualifications(*, session: Session = Depends(get_session), member_id: int) -> list[MemberQualification]:
     return get_by_id(session=session, id=member_id).qualifications
 
 
 @router.delete("/{member_id}/qualification/{qualification_id}")
-def remove_qualification(*, session: Session = Depends(get_session), member_id: int,
-                         qualification: MemberQualification):
+def remove_qualification(*, session: Session = Depends(get_session), member_id: int, qualification_id: int):
     member = get_by_id(session=session, id=member_id)
-    member.qualifications.remove(qualification)
+    found = [e for e in member.qualifications if e.id == qualification_id]
+    if not found:
+        raise NotFoundError(MemberQualification)
+    member.qualifications.remove(found[0])
     session.add(member)
     session.commit()
 

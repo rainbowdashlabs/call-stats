@@ -18,3 +18,7 @@ class NameExistsError(ExistsError):
 class NotFoundError(HTTPException):
     def __init__(self, cls):
         super().__init__(404, cls.__name__ + " not found")
+
+class IdChangeError(HTTPException):
+    def __init__(self, cls):
+        super().__init__(400, cls.__name__ + " id cannot be changed")

@@ -6,15 +6,16 @@ import {listMembers} from "../../../api/members.ts";
 import type {Member} from "../../../interfaces/Member.ts";
 import SmartMultiSelect from "../../base/select/SmartMultiSelect.vue";
 import {createCall} from "../../../api/calls.ts";
+import {parseTime} from "../../../scripts/datetime.ts";
 
 const subjects = ref<Subject[]>([])
 const chosenSubjects = ref<Subject[]>([])
 const members = ref<Member[]>([])
 const selectedMembers = ref<Member[]>([])
-const start_date = ref<String>(new Date().toISOString().split('T')[0]!)
-const start_time = ref<String>(new Date().toTimeString().slice(0, 5))
-const end_date = ref<String>(new Date().toISOString().split('T')[0]!)
-const end_time = ref<String>(new Date().toTimeString().slice(0, 5))
+const start_date = ref<string>(new Date().toISOString().split('T')[0]!)
+const start_time = ref<string>(new Date().toTimeString().slice(0, 5))
+const end_date = ref<string>(new Date().toISOString().split('T')[0]!)
+const end_time = ref<string>(new Date().toTimeString().slice(0, 5))
 const abort_reason = ref<string | null>(null)
 const note = ref<string | null>(null)
 
@@ -23,10 +24,6 @@ onMounted(async () => {
   members.value = await listMembers(true)
 })
 
-function parseTime(date: String, time: String): number {
-  return Math.floor(new Date(`${date}T${time}:00`).getTime() / 1000)
-
-}
 
 async function submit() {
   console.log("start: " + start_date.value + " " + start_time.value)

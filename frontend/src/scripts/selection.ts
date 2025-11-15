@@ -1,5 +1,5 @@
 export function select<T>(items: T[], value_mapper: (item: T) => string, input: string, all_on_empty:boolean = true): T[] {
-    if (!input.trim()) {
+    if (input === undefined || input === null || !input.trim()) {
         if(all_on_empty){
         return items;
         }
@@ -9,7 +9,6 @@ export function select<T>(items: T[], value_mapper: (item: T) => string, input: 
     const searchTerms = input.trim().toLowerCase().split(/\s+/);
 
     return items.filter(item => {
-        console.log(item)
         const value = value_mapper(item).toLowerCase();
         const words = value.split(/\s+/);
 

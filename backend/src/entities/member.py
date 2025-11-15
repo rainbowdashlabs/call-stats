@@ -1,8 +1,10 @@
 from datetime import date
 from typing import Optional
 
+from pydantic import field_validator
 from sqlmodel import SQLModel, Field, Relationship
 
+from data.types import EpochDate
 from entities.call import CallMember
 from entities.exercise import MemberExercise
 from entities.youth import MemberYouthExercise
@@ -13,13 +15,13 @@ class MemberQualification(SQLModel, table=True):
     member: "Member" = Relationship(back_populates="qualifications")
     qualification_id: int = Field(default=None, primary_key=True, foreign_key="qualification.id")
     qualification: "Qualification" = Relationship(back_populates="members", )
-    since: date = Field(default=None)
+    since: Optional[date] = Field(default=None, sa_type=EpochDate)
 
 
 class Member(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(default=None)
-    active: bool = Field(default=True)
+    active_until: Optional[date] = Field(default=None, sa_type=EpochDate)
     qualifications: list[MemberQualification] = Relationship(back_populates="member",
                                                              cascade_delete=True)
     calls: list["Call"] = Relationship(back_populates="members",
@@ -28,3 +30,4 @@ class Member(SQLModel, table=True):
                                                          link_model=MemberYouthExercise)
     exercises: list["Exercise"] = Relationship(back_populates="members",
                                                link_model=MemberExercise)
+

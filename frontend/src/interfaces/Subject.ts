@@ -6,7 +6,7 @@ export interface Subject {
 
 export interface MultiSelectItem {
     label: string
-    value: number
+    value: number | string
 }
 
 export interface MultiSelectGroup {
