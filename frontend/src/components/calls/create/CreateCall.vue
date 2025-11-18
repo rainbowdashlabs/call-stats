@@ -46,8 +46,8 @@ async function submit() {
 </script>
 
 <template>
-  <div class="flex flex-col">
-    Create Call
+  <div class="flex flex-col gap-2">
+    <div class="text-2xl">Create Call</div>
     <div class="flex justify-stretch gap-5">
       <div class="w-full flex gap-2">
         <span>Start</span>
@@ -63,20 +63,27 @@ async function submit() {
       </div>
     </div>
 
-    Subjects
+    <div>
+      Subjects
+      <SmartMultiSelect v-model="chosenSubjects" :options="subjects" :value_mapper="(e:Subject) => e.name"
+                        :key_mapper="(e: Subject) => e.id!" :show_empty="false"/>
+    </div>
 
-    <SmartMultiSelect v-model="chosenSubjects" :options="subjects" :value_mapper="(e:Subject) => e.name"
-                      :key_mapper="(e: Subject) => e.id!" :show_empty="false"/>
+    <div>
+      Members
+      <SmartMultiSelect v-model="selectedMembers" :options="members" :value_mapper="(e:Member) => e.name"
+                        :key_mapper="(e:Member) => e.id" :show_empty="false"/>
+    </div>
 
-    Members
+    <div>
+      Abort Reason
+      <input v-model="abort_reason" type="text" placeholder="abort_reason" class="bg-gray-800 text-gray-50 w-full"/>
+    </div>
 
-    <SmartMultiSelect v-model="selectedMembers" :options="members" :value_mapper="(e:Member) => e.name"
-                      :key_mapper="(e:Member) => e.id" :show_empty="false"/>
-
-    Abort Reason
-    <input v-model="abort_reason" type="text" placeholder="abort_reason" class="bg-gray-800 text-gray-50 w-full"/>
-    Note
-    <input v-model="note" type="text" placeholder="note" class="bg-gray-800 text-gray-50 w-full"/>
+    <div>
+      Note
+      <input v-model="note" type="text" placeholder="note" class="bg-gray-800 text-gray-50 w-full"/>
+    </div>
 
     <button @click="submit" class="bg-green-500 text-white p-2">Create</button>
   </div>

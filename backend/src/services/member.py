@@ -17,9 +17,10 @@ def update(*, session: Session = Depends(get_session), new: Member) -> Member:
         result = session.exec(stmt).one_or_none()
         if result:
             raise ExistsError(result)
-    session.add(new)
+    old.update(new)
+    session.add(old)
     session.commit()
-    session.refresh(new)
+    session.refresh(old)
     return new
 
 

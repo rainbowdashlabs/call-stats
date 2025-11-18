@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
+import ErrorPopup from './components/base/ErrorPopup.vue'
 </script>
 
 <template>
@@ -20,6 +21,8 @@ import { RouterLink, RouterView } from 'vue-router'
         <RouterView />
       </main>
     </div>
+
+    <ErrorPopup />
 
     <footer class="footer">
       <div class="footer-inner">

@@ -3,10 +3,11 @@ import {onMounted, type PropType, ref} from "vue";
 import type {MemberQualification, Qualification} from "../../interfaces/Qualification.ts";
 import type {Member} from "../../interfaces/Member.ts";
 import SmartSelect from "../base/select/SmartSelect.vue";
-import {addQualification, getQualifications} from "../../api/member.ts";
+import {addQualification, getQualifications, removeQualification} from "../../api/member.ts";
 import {listQualifications} from "../../api/qualifications.ts";
 import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
 import {parseDate} from "../../scripts/datetime.ts";
+import SimpleButton from "../base/buttons/SimpleButton.vue";
 
 const props = defineProps({
   member: {
@@ -33,7 +34,7 @@ async function add() {
     since: parseDate(selected_date.value)
   }
   console.log(qualification)
-  await addQualification(qualification)
+  qualification = await addQualification(qualification)
   member_qualifications.value.push(qualification)
 }
 
@@ -44,14 +45,20 @@ async function load() {
   console.log(JSON.stringify(qualifications.value))
 }
 
+async function remove(qualification :MemberQualification){
+  await removeQualification(qualification)
+  member_qualifications.value = member_qualifications.value.filter(e => e.qualification_id != qualification.qualification_id)
+}
+
 onMounted(load)
 </script>
 
 <template>
   <div>
     <div>Qualifications</div>
-    <div v-for="qualification in member_qualifications">{{ qualificationName(qualification) }}
-      {{ qualification.since }}
+    <div v-for="qualification in member_qualifications" class="flex gap-2">
+      {{ qualificationName(qualification) }} seit {{ qualification.since }}
+      <SimpleButton @click="remove(qualification)">🗑️</SimpleButton>
     </div>
 
     <div v-if="qualifications.length > 0" class="flex gap-2">

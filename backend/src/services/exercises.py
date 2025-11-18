@@ -1,8 +1,12 @@
+from math import ceil
+
 from fastapi import Depends, APIRouter
+from sqlalchemy import func
 from sqlmodel import Session, select
 
 from data import get_session
-from entities.exercise import Exercise
+from entities.exercise import Exercise, FullExercise
+from services.extra.page import Page
 
 router = APIRouter(prefix="/exercises",
                    tags=["exercises"])
@@ -17,6 +21,11 @@ def create(*, session: Session = Depends(get_session), exercise: Exercise) -> Ex
 
 
 @router.get("")
-def get_all(*, session: Session = Depends(get_session), page: int = 1, per_page: int = 100) -> list[Exercise]:
-    stmt = select(Exercise).order_by(Exercise.date.desc()).limit(per_page).offset((page - 1) * per_page)
-    return list(session.exec(stmt).all())
+def get_all(*, session: Session = Depends(get_session), page: int = 1, size: int = 100) -> Page[FullExercise]:
+    stmt = select(Exercise).order_by(Exercise.date.desc()).limit(size).offset((page - 1) * size)
+    exercises =  [FullExercise.convert(e) for e in list(session.exec(stmt).all())]
+    stmt = select(func.count(Exercise.id)).select_from(Exercise)
+    count: int = (session.exec(stmt)).first()
+    count = ceil(count / float(size))
+
+    return Page(page=page, size=size, entries=exercises, pages=count)

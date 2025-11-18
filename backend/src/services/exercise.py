@@ -11,7 +11,7 @@ router = APIRouter(prefix="/exercise",
                    tags=["exercises"])
 
 
-@router.delete("/member/{exercise_id}")
+@router.put("/{exercise_id}/member")
 def add_members(*, session: Session = Depends(get_session), exercise_id: int, member_ids: list[int]):
     exercise = get_by_id(session=session, id=exercise_id)
     for member_ids in member_ids:
@@ -21,7 +21,7 @@ def add_members(*, session: Session = Depends(get_session), exercise_id: int, me
     session.commit()
 
 
-@router.delete("/member/{exercise_id}")
+@router.delete("/{exercise_id}/member")
 def remove_members(*, session: Session = Depends(get_session), exercise_id: int, member_ids: list[int]):
     exercise = get_by_id(session=session, id=exercise_id)
     for member_ids in member_ids:

@@ -4,7 +4,7 @@ from sqlmodel import Session
 from sqlmodel import select
 
 from data import get_session
-from entities.call import Call
+from entities.call import Call, FullCall
 from services.extra.errors import NotFoundError
 from services.member import get_by_id as get_member_by_id
 
@@ -32,12 +32,12 @@ def remove_members(*, session: Session = Depends(get_session), call_id: int, mem
 
 
 @router.get("/{id}")
-def get_by_id(*, session: Session = Depends(get_session), id: int):
+def get_by_id(*, session: Session = Depends(get_session), id: int) -> FullCall:
     statement = select(Call).where(Call.id == id)
     result = session.exec(statement).first()
     if not result:
         raise NotFoundError(Call)
-    return result
+    return FullCall.convert(result)
 
 
 @router.patch("")

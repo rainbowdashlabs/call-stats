@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import field_validator
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Relationship
 
 from data.types import EpochDate
@@ -21,7 +21,7 @@ class MemberQualification(SQLModel, table=True):
 class Member(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(default=None)
-    active_until: Optional[date] = Field(default=None, sa_type=EpochDate)
+    retired: Optional[date] = Field(default=None, sa_type=EpochDate)
     qualifications: list[MemberQualification] = Relationship(back_populates="member",
                                                              cascade_delete=True)
     calls: list["Call"] = Relationship(back_populates="members",
@@ -31,3 +31,15 @@ class Member(SQLModel, table=True):
     exercises: list["Exercise"] = Relationship(back_populates="members",
                                                link_model=MemberExercise)
 
+    def update(self, member: "Member"):
+        self.name = member.name
+        self.retired = member.retired
+
+class SimpleMember(BaseModel):
+    id: int
+    name: str
+
+    @staticmethod
+    def convert(member: Member) -> "SimpleMember":
+        return SimpleMember(id=member.id,
+                            name=member.name)

@@ -10,26 +10,28 @@ const props = defineProps({
   }
 })
 
-function edit() {
-  router.push({path: `/member/${props.member.id!}`})
+async function edit() {
+  await router.push({path: `/member/${props.member.id!}`})
 }
 </script>
 
 <template>
-  <div class="flex gap-2">
-    <div>
+  <div class="grid grid-cols-6">
+    <div class="">
       {{ member.id! }}
     </div>
-    <div class="flex-grow">
+    <div class="col-span-3">
       {{ member.name }}
     </div>
-    <div v-if="member.active_until">
-      till {{ member.active_until }}
+    <div class="">
+      <div v-if="member.retired">
+        bis {{ member.retired }}
+      </div>
+      <div v-else>
+        Aktiv
+      </div>
     </div>
-    <div v-else>
-      Aktiv
-    </div>
-    <div @click="edit" style="cursor: pointer">✏️</div>
+    <div @click="edit" class="" style="cursor: pointer">✏️</div>
   </div>
 </template>
 

@@ -2,6 +2,7 @@
 import router from "../router";
 import CreateCall from "../components/calls/create/CreateCall.vue";
 import ConfirmButton from "../components/base/buttons/derivates/ConfirmButton.vue";
+import CallList from "../components/calls/calllist/CallList.vue";
 </script>
 
 <template>
@@ -9,5 +10,7 @@ import ConfirmButton from "../components/base/buttons/derivates/ConfirmButton.vu
     <ConfirmButton @click="router.push({path: '/calls/subjects'})">Subjects</ConfirmButton>
 
     <CreateCall/>
+
+    <CallList/>
   </section>
 </template>

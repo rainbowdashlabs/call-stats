@@ -90,6 +90,7 @@ function remove(item: T) {
 
 function update() {
   currentMatches.value = select<T>(props.options, props.value_mapper, term.value, props.show_empty)
+  currentMatches.value = currentMatches.value.filter(v => model.value.indexOf(v as T) === -1)
   showDropdown.value = true
 }
 
@@ -109,7 +110,7 @@ function onBlur() {
 
 <template>
   <div>
-    <div class="flex gap-1">
+    <div class="flex gap-2">
       <StandardButton class="bg-gray-200" v-for="item in model" :key="props.key_mapper(item)" @click="_ => remove(item)">
         {{ props.value_mapper(item) }}
       </StandardButton>

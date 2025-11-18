@@ -24,7 +24,7 @@ def create(*, session: Session = Depends(get_session), member: Member) -> Member
 @router.get("")
 def get_all(*, session: Session = Depends(get_session), filter_active: bool = False) -> list[Member]:
     if filter_active:
-        stmt = select(Member).where(Member.active == True)
+        stmt = select(Member).where(Member.retired == None)
     else:
         stmt = select(Member)
     result = session.exec(stmt).all()

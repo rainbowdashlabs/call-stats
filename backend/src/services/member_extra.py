@@ -15,12 +15,12 @@ router = APIRouter(prefix="/member",
 
 
 @router.post("/{member_id}/qualification")
-def add_qualification(*, session: Session = Depends(get_session), member_id: int, qualification: MemberQualification):
+def add_qualification(*, session: Session = Depends(get_session), member_id: int, qualification: MemberQualification) -> MemberQualification:
     member = get_by_id(session=session, id=member_id)
-    print(qualification)
     member.qualifications.append(qualification)
     session.add(member)
     session.commit()
+    return qualification
 
 
 @router.get("/{member_id}/qualifications")
@@ -31,7 +31,7 @@ def get_qualifications(*, session: Session = Depends(get_session), member_id: in
 @router.delete("/{member_id}/qualification/{qualification_id}")
 def remove_qualification(*, session: Session = Depends(get_session), member_id: int, qualification_id: int):
     member = get_by_id(session=session, id=member_id)
-    found = [e for e in member.qualifications if e.id == qualification_id]
+    found = [e for e in member.qualifications if e.qualification_id == qualification_id]
     if not found:
         raise NotFoundError(MemberQualification)
     member.qualifications.remove(found[0])

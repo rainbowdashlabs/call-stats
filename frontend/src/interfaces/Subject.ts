@@ -1,7 +1,4 @@
-export interface Subject {
-    id?: number
-    group: string
-    name: string
+export interface Subject extends SimpleSubject {
 }
 
 export interface MultiSelectItem {
@@ -12,4 +9,10 @@ export interface MultiSelectItem {
 export interface MultiSelectGroup {
     label: string
     items: MultiSelectItem[]
+}
+
+export interface SimpleSubject {
+    id?: number,
+    name: string,
+    group: string
 }

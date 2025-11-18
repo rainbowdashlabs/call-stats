@@ -46,15 +46,6 @@ class CreateCall(BaseModel):
     note: Optional[str]
     members: list[int]
 
-class SimpleMember(BaseModel):
-    id: int
-    name: str
-
-    @staticmethod
-    def convert(member: "Member") -> "SimpleMember":
-        return SimpleMember(id=member.id,
-                      name=member.name)
-
 class SimpleSubject(BaseModel):
     id: int
     name: str
@@ -74,10 +65,11 @@ class FullCall(BaseModel):
     end: datetime
     abort_reason: Optional[str]
     note: Optional[str]
-    members: list[SimpleMember]
+    members: list["SimpleMember"]
 
     @staticmethod
     def convert(call: Call) -> "FullCall":
+        from member import SimpleMember
         return FullCall(id=call.id,
                  subjects=[SimpleSubject.convert(e) for e in call.subjects],
                  members=[SimpleMember.convert(e) for e in call.members],
