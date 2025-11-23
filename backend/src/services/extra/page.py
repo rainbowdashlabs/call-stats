@@ -9,3 +9,6 @@ class Page(BaseModel, Generic[Type]):
     size: int
     pages: int
     entries: list[Type]
+
+    class Config:
+        arbitrary_types_allowed = True

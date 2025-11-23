@@ -33,6 +33,7 @@ class Call(SQLModel, table=True):
     subjects: list[CallSubject] = Relationship(back_populates="call")
     start: datetime = Field(default=None, index=True)
     end: datetime = Field(default=None, index=True)
+    additional: int = Field(default=0)
     abort_reason: Optional[str] = Field(default=None)
     note: Optional[str] = Field(default=None)
     members: list["Member"] = Relationship(back_populates="calls", link_model=CallMember)
@@ -69,7 +70,7 @@ class FullCall(BaseModel):
 
     @staticmethod
     def convert(call: Call) -> "FullCall":
-        from member import SimpleMember
+        from entities.member import SimpleMember
         return FullCall(id=call.id,
                  subjects=[SimpleSubject.convert(e) for e in call.subjects],
                  members=[SimpleMember.convert(e) for e in call.members],

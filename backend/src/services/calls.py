@@ -29,14 +29,14 @@ def create(*, session: Session = Depends(get_session), call: CreateCall) -> Call
 
 
 @router.get("")
-def get_all(*, session: Session = Depends(get_session), page: int = 1, per_page: int = 100) -> Page[FullCall]:
+def get_all(*, session: Session = Depends(get_session), page: int = 1, per_page: int = 100) -> dict:
     stmt = select(Call).order_by(Call.start.desc()).limit(per_page).offset((page - 1) * per_page)
     res = session.exec(stmt)
     res = [FullCall.convert(e) for e in res]
     stmt = select(func.count(Call.id)).select_from(Call)
     count: int = (session.exec(stmt)).first()
     count = ceil(count / float(per_page))
-    return Page(page=page, size=per_page, pages=count, entries=res)
+    return Page(page=page, size=per_page, pages=count, entries=res).model_dump()
 
 
 @router.get("/search")

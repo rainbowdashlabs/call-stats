@@ -1,9 +1,19 @@
-from sqlmodel import create_engine, SQLModel, Session
+import logging
+import os
 
+from sqlmodel import create_engine, SQLModel, Session
+log = logging.getLogger(__name__)
 
 def new_engine():
     # TODO: replace with actual database
-    return create_engine("postgresql+psycopg://postgres:postgres@localhost:5432/postgres", echo=True)
+    username = os.getenv("DB_USERNAME", "postgres")
+    password = os.getenv("DB_PASSWORD", "postgres")
+    schema = os.getenv("DB_SCHEMA", "public")
+    database = os.getenv("DB_DATABASE", "postgres")
+
+    connection_string = f"postgresql+psycopg://{username}:{password}@localhost:5432/{database}?"
+    log.info(f"Connecting to database: {connection_string}")
+    return create_engine(connection_string, echo=True, connect_args={'options': '-c search_path={}'.format(schema)})
 
 
 engine = new_engine()
