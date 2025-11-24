@@ -109,8 +109,8 @@ function onBlur() {
 </script>
 
 <template>
-  <div>
-    <div class="flex gap-2">
+  <div class="flex flex-col gap-2">
+    <div class="flex gap-2 flex-wrap justify-center">
       <StandardButton class="bg-gray-200" v-for="item in model" :key="props.key_mapper(item)" @click="_ => remove(item)">
         {{ props.value_mapper(item) }}
       </StandardButton>

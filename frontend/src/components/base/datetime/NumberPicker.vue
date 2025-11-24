@@ -43,8 +43,6 @@ watch(currentValue, clampAndPropagateToModel)
 const emit = defineEmits(["overflowUp", "overflowDown"])
 
 function handleDown() {
-  console.log(currentValue.value)
-  console.log("down")
   if (currentValue.value - 1 < props.min) {
     currentValue.value = props.max
     emit("overflowDown")
@@ -55,8 +53,6 @@ function handleDown() {
 }
 
 function handleUp() {
-  console.log(currentValue.value)
-  console.log("up")
   if (currentValue.value + 1 > props.max) {
     currentValue.value = props.min
     emit("overflowUp")
@@ -70,14 +66,14 @@ function handleUp() {
 
 <template>
   <div class="gap-2">
-    <simple-button class="bg-secondary rounded-t-md" @click="handleUp">
+    <SimpleButton class="bg-secondary rounded-t-md" @click="handleUp">
       <font-awesome-icon icon="fa-solid fa-angle-up"/>
-    </simple-button>
-    <input type="text" pattern="[0-9]*" :min="props.min" :max="props.max" v-model="currentValue" @keydown.down.prevent="handleDown"
+    </SimpleButton>
+    <input type="text" pattern="[0-9]*" @focusin="($event.target as HTMLInputElement).select()" :min="props.min" :max="props.max" v-model="currentValue" @keydown.down.prevent="handleDown"
            @keydown.up.prevent="handleUp" :style="{width: props.max.toString().length + 2 + 'ch'}">
-    <simple-button class="bg-secondary rounded-b-md" @click="handleDown">
+    <SimpleButton class="bg-secondary rounded-b-md" @click="handleDown">
       <font-awesome-icon icon="fa-solid fa-angle-down"/>
-    </simple-button>
+    </SimpleButton>
   </div>
 </template>
 

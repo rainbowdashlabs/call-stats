@@ -47,6 +47,7 @@ class CreateCall(BaseModel):
     note: Optional[str]
     members: list[int]
 
+
 class SimpleSubject(BaseModel):
     id: int
     name: str
@@ -56,8 +57,9 @@ class SimpleSubject(BaseModel):
     def convert(subject: CallSubject) -> "SimpleSubject":
         subject = subject.subject
         return SimpleSubject(id=subject.id,
-                      name=subject.name,
-                      group=subject.group)
+                             name=subject.name,
+                             group=subject.group)
+
 
 class FullCall(BaseModel):
     id: int
@@ -72,9 +74,9 @@ class FullCall(BaseModel):
     def convert(call: Call) -> "FullCall":
         from entities.member import SimpleMember
         return FullCall(id=call.id,
-                 subjects=[SimpleSubject.convert(e) for e in call.subjects],
-                 members=[SimpleMember.convert(e) for e in call.members],
-                 start=call.start,
-                 end=call.end,
-                 abort_reason=call.abort_reason,
-                 note=call.note)
+                        subjects=[SimpleSubject.convert(e) for e in call.subjects],
+                        members=[SimpleMember.convert(e) for e in call.members],
+                        start=call.start,
+                        end=call.end,
+                        abort_reason=call.abort_reason,
+                        note=call.note)

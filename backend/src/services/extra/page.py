@@ -2,13 +2,13 @@ from typing import TypeVar, Generic
 
 from pydantic import BaseModel
 
-Type = TypeVar("Type")
+T = TypeVar("Type")
 
-class Page(BaseModel, Generic[Type]):
+class Page(BaseModel, Generic[T]):
     page: int
     size: int
     pages: int
-    entries: list[Type]
+    entries: list[T]
 
     class Config:
         arbitrary_types_allowed = True

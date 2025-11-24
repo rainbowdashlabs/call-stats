@@ -15,7 +15,6 @@ const model = defineModel({
 })
 
 watch(maxDays, (value) => {
-  console.log("enforce max days")
   day.value = Math.min(value, day.value)
 })
 
@@ -25,12 +24,10 @@ watch(day, () => {
 
 watch(month, (value) => {
   if (value > 12) {
-    console.log("Year up")
     month.value = 1
     year.value += 1
   }
   if (value == 0) {
-    console.log("Year down")
     month.value = 12
     year.value -= 1
   }

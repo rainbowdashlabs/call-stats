@@ -6,11 +6,13 @@ from sqlmodel import Session, select
 
 from data import get_session
 from entities.exercise import Exercise, FullExercise
+from entities.member import SimpleMember
 from services.extra.page import Page
 
 router = APIRouter(prefix="/exercises",
                    tags=["exercises"])
 
+FullExercise.model_rebuild(_types_namespace={"SimpleMember": SimpleMember})
 
 @router.post("")
 def create(*, session: Session = Depends(get_session), exercise: Exercise) -> Exercise:
@@ -27,5 +29,4 @@ def get_all(*, session: Session = Depends(get_session), page: int = 1, size: int
     stmt = select(func.count(Exercise.id)).select_from(Exercise)
     count: int = (session.exec(stmt)).first()
     count = ceil(count / float(size))
-
     return Page(page=page, size=size, entries=exercises, pages=count)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {type PropType, watch} from "vue";
+import {type PropType} from "vue";
 import DatePicker from "./DatePicker.vue";
 import TimePicker from "./TimePicker.vue";
 import type {ADateTime} from "../../../scripts/datetime.ts";
@@ -14,11 +14,6 @@ const props = defineProps({
     default: false
   }
 })
-
-watch(model, (value) => {
-  console.log(`Updated datetime to ${value}`)
-}, {deep: true})
-
 </script>
 
 <template>

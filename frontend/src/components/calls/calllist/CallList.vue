@@ -6,8 +6,6 @@ import {onMounted, ref, watch} from "vue";
 import type {FullCall} from "../../../interfaces/Call.ts";
 import router from "../../../router";
 import CallEntry from "./CallEntry.vue";
-import SimpleButton from "../../base/buttons/SimpleButton.vue";
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import Navigation from "../../base/pagination/Navigation.vue";
 
 const route = useRoute()
@@ -34,6 +32,8 @@ async function load() {
   pages.value = result.pages
 }
 
+defineExpose()
+
 onMounted(load)
 
 </script>
@@ -43,10 +43,10 @@ onMounted(load)
 
   <div class="flex justify-evenly">
     <div class="text-2xl">
-      Calls
+      Alarme
     </div>
     <div class="flex justify-end">
-      <div class="mr-2 content-center">Entries per page:</div>
+      <div class="mr-2 content-center">Einträge pro Seite:</div>
       <select v-model="pageSize" @change="load">
         <option v-for="i in [5,10,20,50,100]" :value="i">{{ i }}</option>
       </select>
@@ -57,7 +57,7 @@ onMounted(load)
     <div class="grid grid-cols-5 gap-2 highlight rounded-2xl" @click="load" style="cursor: pointer">
       <div>Stichwort</div>
       <div>Start</div>
-      <div>End</div>
+      <div>Ende</div>
       <div>Stärke</div>
       <div>Meta</div>
     </div>

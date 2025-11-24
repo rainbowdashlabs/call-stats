@@ -1,7 +1,6 @@
 <script setup lang="ts" generic="T">
 import {ref, type PropType} from 'vue'
 import {select} from "../../../scripts/selection.ts";
-import TextInput from "../input/TextInput.vue";
 
 const props = defineProps({
   options: {
@@ -9,7 +8,7 @@ const props = defineProps({
     required: true
   },
   value_mapper: {
-    type: Function as PropType<(item: T) => string>,
+    type: Function as PropType<(item: T | string) => string>,
     required: true
   },
   key_mapper: {
@@ -35,7 +34,7 @@ const props = defineProps({
   }
 })
 
-const model = defineModel({type: Object as () => T, default: null})
+const model = defineModel({type: Object as () => T | string, default: null})
 model.value = props.options[0]!
 const input_value = ref<string>('')
 const currentMatches = ref<T[]>([])
@@ -105,6 +104,9 @@ function update() {
   if (model.value != null) {
     currentMatches.value = select<T>(props.options, props.value_mapper, input_value.value, props.show_empty)
   }
+  if (!props.strict) {
+    set(props.generator(input_value.value))
+  }
   showDropdown.value = true
 }
 
@@ -125,7 +127,7 @@ function onBlur() {
         @input="update"
         @focus="onFocus"
         @blur="onBlur"
-        :placeholder="placeholder"
+        :placeholder="props.placeholder"
         class="bg-gray-800 text-gray-50 w-full px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
     />
 
