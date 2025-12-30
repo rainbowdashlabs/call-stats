@@ -39,7 +39,7 @@ async function submit() {
   console.log("start: " + start.value)
   console.log("end: " + end.value)
 
-  await createCall({
+  let call = {
     subjects: chosenSubjects.value.map(e => e.id!),
     start: start.value.toUnixTimestamp(),
     end: end.value.toUnixTimestamp(),
@@ -47,7 +47,10 @@ async function submit() {
     members: selectedMembers.value.map(e => e.id!),
     note: note.value,
     abort_reason: abort_reason.value
-  })
+  }
+
+  console.log(JSON.stringify(call))
+  await createCall(call)
   chosenSubjects.value = []
   selectedMembers.value = []
   abort_reason.value = null

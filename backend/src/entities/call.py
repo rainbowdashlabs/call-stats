@@ -43,8 +43,8 @@ class CreateCall(BaseModel):
     subjects: list[int]
     start: datetime
     end: datetime
-    abort_reason: Optional[str]
-    note: Optional[str]
+    abort_reason: Optional[str] = None
+    note: Optional[str] = None
     members: list[int]
 
 

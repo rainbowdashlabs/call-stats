@@ -1,4 +1,5 @@
 INSERT INTO subject("group", name) VALUES ('BRAND', 'BRAND K');
+INSERT INTO subject("group", name) VALUES ('BRAND', 'BRAND M');
 INSERT INTO subject("group", name) VALUES ('BRAND', 'BRAND 1');
 INSERT INTO subject("group", name) VALUES ('BRAND', 'BRAND 2');
 INSERT INTO subject("group", name) VALUES ('BRAND', 'BRAND 3');
