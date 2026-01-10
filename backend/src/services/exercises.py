@@ -2,6 +2,7 @@ from math import ceil
 
 from fastapi import Depends, APIRouter
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
 from data import get_session
@@ -24,8 +25,14 @@ def create(*, session: Session = Depends(get_session), exercise: Exercise) -> Ex
 
 @router.get("")
 def get_all(*, session: Session = Depends(get_session), page: int = 1, size: int = 100) -> Page[FullExercise]:
-    stmt = select(Exercise).order_by(Exercise.date.desc()).limit(size).offset((page - 1) * size)
-    exercises =  [FullExercise.convert(e) for e in list(session.exec(stmt).all())]
+    stmt = (
+        select(Exercise)
+        .options(selectinload(Exercise.members))
+        .order_by(Exercise.exercise_date.desc())
+        .limit(size)
+        .offset((page - 1) * size)
+    )
+    exercises = [FullExercise.convert(e) for e in list(session.exec(stmt).all())]
     stmt = select(func.count(Exercise.id)).select_from(Exercise)
     count: int = (session.exec(stmt)).first()
     count = ceil(count / float(size))

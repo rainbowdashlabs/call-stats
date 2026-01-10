@@ -1,9 +1,7 @@
 <script setup lang="ts">
+import CreateExercise from "../components/exercise/CreateExercise.vue";
 </script>
 
 <template>
-  <section>
-    <h1>Training</h1>
-    <p>Welcome to the Training page.</p>
-  </section>
+<CreateExercise/>
 </template>

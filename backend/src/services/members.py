@@ -1,5 +1,7 @@
+from datetime import datetime
+
 from fastapi import Depends, APIRouter
-from sqlmodel import Session, select
+from sqlmodel import Session, select, or_
 
 from data import get_session
 from entities.member import Member
@@ -22,8 +24,10 @@ def create(*, session: Session = Depends(get_session), member: Member) -> Member
 
 
 @router.get("")
-def get_all(*, session: Session = Depends(get_session), filter_active: bool = False) -> list[Member]:
-    if filter_active:
+def get_all(*, session: Session = Depends(get_session), filter_active: bool = False, active_after: datetime = None) -> list[Member]:
+    if active_after and filter_active:
+        stmt = select(Member).where(or_(Member.retired == None, Member.retired > active_after))
+    elif filter_active:
         stmt = select(Member).where(Member.retired == None)
     else:
         stmt = select(Member)

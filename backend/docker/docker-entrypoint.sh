@@ -1,1 +1,1 @@
-python -m pipenv run python src/main.py
+python -m pipenv run uvidorn --app-dir src main:app

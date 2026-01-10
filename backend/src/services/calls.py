@@ -3,6 +3,7 @@ from math import ceil
 
 from fastapi import Depends, APIRouter
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session, select
 
 from data import get_session
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/calls",
                    tags=["calls"])
 
 FullCall.model_rebuild(_types_namespace={"SimpleMember": SimpleMember})
+
 
 @router.post("")
 def create(*, session: Session = Depends(get_session), call: CreateCall) -> Call:
@@ -32,7 +34,16 @@ def create(*, session: Session = Depends(get_session), call: CreateCall) -> Call
 
 @router.get("")
 def get_all(*, session: Session = Depends(get_session), page: int = 1, per_page: int = 100) -> Page[FullCall]:
-    stmt = select(Call).order_by(Call.start.desc()).limit(per_page).offset((page - 1) * per_page)
+    stmt = (
+        select(Call)
+        .options(
+            selectinload(Call.subjects).selectinload(CallSubject.subject),
+            selectinload(Call.members)
+        )
+        .order_by(Call.start.desc())
+        .limit(per_page)
+        .offset((page - 1) * per_page)
+    )
     res = session.exec(stmt)
     res = [FullCall.convert(e) for e in res]
     stmt = select(func.count(Call.id)).select_from(Call)
@@ -44,13 +55,17 @@ def get_all(*, session: Session = Depends(get_session), page: int = 1, per_page:
 @router.get("/search")
 def search(*, session: Session = Depends(get_session), start: datetime = None, end: datetime = None, page: int = 1,
            per_page: int = 100) -> list[Call]:
-    stmt = select(Call)
+    stmt = select(Call).options(
+        selectinload(Call.subjects).selectinload(CallSubject.subject),
+        selectinload(Call.members)
+    )
     if start:
         stmt = stmt.where(Call.start >= start)
     if end:
         stmt = stmt.where(Call.end >= end)
     stmt = stmt.order_by(Call.start.desc()).limit(per_page).offset((page - 1) * per_page)
     return list(session.exec(stmt))
+
 
 @router.get("/abort_reasons")
 def abort_reasons(*, session: Session = Depends(get_session)) -> list[str]:

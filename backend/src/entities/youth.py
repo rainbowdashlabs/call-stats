@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import date
 from data.types import EpochDate
@@ -15,3 +16,22 @@ class YouthExercise(SQLModel, table=True):
     duration: int = Field(default=None)
     participants: int = Field(default=None)
     instructors: list["Member"] = Relationship(back_populates="youth_exercise", link_model=MemberYouthExercise)
+
+
+class FullYouthExercise(BaseModel):
+    id: int
+    subject: str
+    exercise_date: date
+    duration: int
+    participants: int
+    instructors: list["SimpleMember"]
+
+    @staticmethod
+    def convert(exercise: YouthExercise):
+        from entities.member import SimpleMember
+        return FullYouthExercise(id=exercise.id,
+                                 subject=exercise.subject,
+                                 exercise_date=exercise.exercise_date,
+                                 duration=exercise.duration,
+                                 participants=exercise.participants,
+                                 instructors=[SimpleMember.convert(e) for e in exercise.instructors])

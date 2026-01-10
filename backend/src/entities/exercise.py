@@ -30,7 +30,7 @@ class FullExercise(BaseModel):
 
     @staticmethod
     def convert(exercise: Exercise):
-        from member import SimpleMember
+        from entities.member import SimpleMember
         return FullExercise(id=exercise.id,
                             subject=exercise.subject,
                             exercise_date=exercise.exercise_date,

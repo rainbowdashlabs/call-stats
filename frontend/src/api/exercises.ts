@@ -24,3 +24,11 @@ export async function listExercises(page: number = 1, pageSize: number = 100): P
     }
 }
 
+export async function addExerciseMembers(exercise: Exercise, members: Number[]): Promise<void> {
+    try {
+        await http.put<void>(`/api/exercise/${exercise.id}/member`, members)
+    } catch (e) {
+        emitError(e, {message: 'Failed to create exercise.'})
+        throw e
+    }
+}
