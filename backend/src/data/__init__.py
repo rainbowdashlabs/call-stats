@@ -10,8 +10,9 @@ def new_engine():
     password = os.getenv("DB_PASSWORD", "postgres")
     schema = os.getenv("DB_SCHEMA", "public")
     database = os.getenv("DB_DATABASE", "postgres")
+    port = os.getenv("DB_PORT", "5432")
 
-    connection_string = f"postgresql+psycopg://{username}:{password}@localhost:5432/{database}?"
+    connection_string = f"postgresql+psycopg://{username}:{password}@localhost:{port}/{database}?"
     log.info(f"Connecting to database: {connection_string}")
     return create_engine(connection_string, echo=True, connect_args={'options': '-c search_path={}'.format(schema)})
 

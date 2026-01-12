@@ -25,7 +25,7 @@ def create(*, session: Session = Depends(get_session), call: CreateCall) -> Call
     session.commit()
     session.refresh(created)
     for i, subject in enumerate(call.subjects):
-        session.add(CallSubject(call_id=created.id, subject_id=subject, order=i))
+        session.add(CallSubject(call_id=created.id, subject_id=subject, subject_order=i))
     for member in call.members:
         created.members.append(get_member_by_id(session=session, id=member))
     session.commit()

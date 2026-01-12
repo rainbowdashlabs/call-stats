@@ -16,6 +16,7 @@ class MemberQualification(SQLModel, table=True):
     qualification_id: int = Field(default=None, primary_key=True, foreign_key="qualification.id")
     qualification: "Qualification" = Relationship(back_populates="members", )
     since: Optional[date] = Field(default=None, sa_type=EpochDate)
+    till: Optional[date] = Field(default=None, sa_type=EpochDate)
 
 
 class Member(SQLModel, table=True):

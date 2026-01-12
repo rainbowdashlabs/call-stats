@@ -1,9 +1,7 @@
 <script setup lang="ts">
+import CreateYouthExercise from "../components/youthexercise/CreateYouthExercise.vue";
 </script>
 
 <template>
-  <section>
-    <h1>Youth</h1>
-    <p>Welcome to the Youth page.</p>
-  </section>
+<CreateYouthExercise/>
 </template>

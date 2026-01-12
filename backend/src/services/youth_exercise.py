@@ -15,7 +15,7 @@ router = APIRouter(prefix="/youth_exercise",
 FullYouthExercise.model_rebuild(_types_namespace={"SimpleMember": SimpleMember})
 
 
-@router.patch("/member/{exercise_id}")
+@router.put("/{exercise_id}/member")
 def add_members(*, session: Session = Depends(get_session), exercise_id: int, member_ids: list[int]):
     exercise = _get_youth_exercise_by_id(session=session, id=exercise_id)
     for member_ids in member_ids:
@@ -25,7 +25,7 @@ def add_members(*, session: Session = Depends(get_session), exercise_id: int, me
     session.commit()
 
 
-@router.delete("/member/{exercise_id}")
+@router.delete("/{exercise_id}/member")
 def remove_members(*, session: Session = Depends(get_session), exercise_id: int, member_ids: list[int]):
     exercise = _get_youth_exercise_by_id(session=session, id=exercise_id)
     for member_ids in member_ids:

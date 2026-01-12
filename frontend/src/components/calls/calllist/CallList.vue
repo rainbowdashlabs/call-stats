@@ -32,8 +32,6 @@ async function load() {
   pages.value = result.pages
 }
 
-defineExpose()
-
 onMounted(load)
 
 </script>
@@ -53,6 +51,8 @@ onMounted(load)
     </div>
   </div>
 
+  <Navigation :pages="pages" v-model="page"/>
+
   <div class="border-2 rounded-2xl border-accent grid grid-cols-1 gap-2 p-2 mt-2 mb-2">
     <div class="grid grid-cols-5 gap-2 highlight rounded-2xl" @click="load" style="cursor: pointer">
       <div>Stichwort</div>
@@ -64,7 +64,7 @@ onMounted(load)
     <CallEntry v-for="call in pageContent" :call="call"/>
   </div>
 
-  <Navigation :pages="pages" :model-value="page"/>
+  <Navigation :pages="pages" v-model="page"/>
 
 </template>
 

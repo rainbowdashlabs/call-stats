@@ -15,7 +15,7 @@ class CallMember(SQLModel, table=True):
 class CallSubject(SQLModel, table=True):
     call_id: int | None = Field(default=None, foreign_key="call.id", primary_key=True)
     subject_id: int | None = Field(default=None, foreign_key="subject.id", primary_key=True)
-    order: int = Field(default=None)
+    subject_order: int = Field(default=None)
 
     call: "Call" = Relationship(back_populates="subjects")
     subject: "Subject" = Relationship(back_populates="calls")
