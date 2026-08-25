@@ -1,9 +1,11 @@
 from fastapi import Depends, APIRouter
 from sqlmodel import Session, select
 
+from sqlalchemy import func
+
 from data import get_session
-from entities.call import Subject
-from services.extra.errors import NotFoundError
+from entities.call import CallSubject, Subject
+from services.extra.errors import InUseError, NotFoundError
 
 
 router = APIRouter(prefix="/subject",
@@ -27,9 +29,9 @@ def update(*, session: Session = Depends(get_session), id: int, subject: Subject
     if existing is None:
         raise NotFoundError(Subject)
 
-    # Update fields
     existing.name = subject.name
     existing.group = subject.group
+    existing.archived = subject.archived
 
     session.add(existing)
     session.commit()
@@ -39,6 +41,12 @@ def update(*, session: Session = Depends(get_session), id: int, subject: Subject
 
 @router.delete("/{id}")
 def delete(*, session: Session = Depends(get_session), id: int) -> None:
+    """Removes a subject that was never used. One with call history has to be archived instead,
+    so the calls it appears on keep their wording."""
     subject = get_by_id(session=session, id=id)
+    used_by = session.exec(select(func.count()).select_from(CallSubject)
+                           .where(CallSubject.subject_id == id)).one()
+    if used_by:
+        raise InUseError(Subject, f"{used_by} Einsätze")
     session.delete(subject)
     session.commit()

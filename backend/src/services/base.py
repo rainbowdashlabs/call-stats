@@ -9,6 +9,7 @@ from services.extra.errors import NotFoundError
 class MultiSelectItem(BaseModel):
     label: str
     value: Union[int, str]
+    archived: bool = False
 
 class MultiSelectGroup(BaseModel):
     label: str

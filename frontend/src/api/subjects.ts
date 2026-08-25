@@ -5,13 +5,15 @@ import {t} from '../i18n'
 
 const http = getHttpClient()
 
-export async function listSubjects(grouped: boolean = true): Promise<MultiSelectGroup[] | Subject[]> {
+export async function listSubjects(grouped: boolean = true,
+                                   includeArchived: boolean = false): Promise<MultiSelectGroup[] | Subject[]> {
+    const params = {grouped, include_archived: includeArchived}
     try {
         if (grouped) {
-            const {data} = await http.get<MultiSelectGroup[]>('/api/subjects', {params: {grouped: grouped}})
+            const {data} = await http.get<MultiSelectGroup[]>('/api/subjects', {params})
             return data
         } else {
-            const {data} = await http.get<Subject[]>('/api/subjects', {params: {grouped: grouped}})
+            const {data} = await http.get<Subject[]>('/api/subjects', {params})
             return data
         }
     } catch (e) {

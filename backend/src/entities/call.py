@@ -25,6 +25,7 @@ class Subject(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     group: str
     name: str
+    archived: bool = Field(default=False)
     calls: list[CallSubject] = Relationship(back_populates="subject")
 
 
@@ -67,6 +68,7 @@ class SubjectUsage(BaseModel):
     id: int
     name: str
     group: str
+    archived: bool
     usage: int
 
 

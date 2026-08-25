@@ -11,11 +11,16 @@ defineProps({
   }
 })
 
+defineEmits<{
+  (e: 'removed', id: number | string): void
+}>()
+
 </script>
 
 <template>
 
-  <SubjectGroup v-for="item in subject_groups" :group="item"/>
+  <SubjectGroup v-for="item in subject_groups" :key="item.label" :group="item"
+                @removed="id => $emit('removed', id)"/>
 
 </template>
 

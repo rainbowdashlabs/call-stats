@@ -36,6 +36,14 @@ class NameExistsError(ExistsError):
         super().__init__(instance, german_name(type(instance)) + ": Name existiert bereits")
 
 
+class InUseError(HTTPException):
+    """Raised when a record is still referenced elsewhere and has to be archived rather than deleted."""
+
+    def __init__(self, cls, usage: str):
+        super().__init__(409, german_name(cls) + " wird noch verwendet (" + usage + ") und kann nicht "
+                              "gelöscht werden – bitte stattdessen archivieren")
+
+
 class NotFoundError(HTTPException):
     def __init__(self, cls):
         super().__init__(404, german_name(cls) + " nicht gefunden")

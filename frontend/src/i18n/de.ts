@@ -87,7 +87,13 @@ export default {
     subjects: {
         title: 'Stichwörter',
         group: 'Gruppe',
-        name: 'Stichwort'
+        name: 'Stichwort',
+        archived: 'archiviert',
+        archive: 'Archivieren',
+        restore: 'Wiederherstellen',
+        rename: 'Umbenennen',
+        showArchived: 'Archivierte anzeigen',
+        archiveHint: 'Archivierte Stichwörter werden bei der Einsatzerfassung nicht mehr vorgeschlagen, bleiben aber bei bereits erfassten Einsätzen erhalten. Nur nie verwendete Stichwörter lassen sich löschen.'
     },
     exercises: {
         title: 'Übungen',
@@ -105,6 +111,10 @@ export default {
         showRetired: 'Ausgetretene anzeigen:',
         active: 'Aktiv',
         until: 'bis {date}',
+        joined: 'Eintritt:',
+        joinedUnknown: 'Nicht erfasst',
+        setJoined: 'Eintrittsdatum setzen',
+        removeJoined: 'Eintrittsdatum entfernen',
         retired: 'Austritt:',
         removeRetirement: 'Austritt entfernen',
         retire: 'Austritt eintragen',
@@ -176,6 +186,7 @@ export default {
             crewHours: 'Mannschaftsstunden',
             roster: 'Im Bestand',
             participating: 'Aktiv im Jahr',
+            joined: 'Eingetreten',
             retired: 'Ausgeschieden',
             withLeader: 'Mit Führung',
             withDriver: 'Mit Maschinist',
@@ -214,7 +225,7 @@ export default {
         },
         yearsBack: 'Vergleichszeitraum',
         noData: 'Für {year} liegen keine Daten vor.',
-        rosterCaveat: 'Der Bestand vergangener Jahre wird aus dem Austrittsdatum abgeleitet; ein Eintrittsdatum wird nicht erfasst.',
+        rosterCaveat: 'Der Bestand vergangener Jahre beruht auf Ein- und Austrittsdatum. Bei Mitgliedern ohne erfasstes Eintrittsdatum wird angenommen, dass sie schon immer dabei waren.',
         present: 'Präsentation'
     },
     presentation: {

@@ -1,10 +1,12 @@
 export interface Subject extends SimpleSubject {
+    archived?: boolean
     usage?: number
 }
 
 export interface MultiSelectItem {
     label: string
     value: number | string
+    archived?: boolean
 }
 
 export interface MultiSelectGroup {
