@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 import sqlalchemy
 from sqlmodel import create_engine, SQLModel, Session
@@ -14,9 +15,11 @@ def new_engine():
     port = os.getenv("DB_PORT", "5432")
     host = os.getenv("DB_HOST", "localhost")
 
+    echo = os.getenv("DB_ECHO", "false").lower() in ("1", "true", "yes")
+
     connection_string = f"postgresql+psycopg://{username}:{password}@{host}:{port}/{database}?"
-    log.info(f"Connecting to database: {connection_string}")
-    return create_engine(connection_string, echo=True, connect_args={'options': '-c search_path={}'.format(schema)})
+    log.info(f"Connecting to database {database} at {host}:{port}")
+    return create_engine(connection_string, echo=echo, connect_args={'options': '-c search_path={}'.format(schema)})
 
 
 engine = new_engine()
@@ -40,6 +43,48 @@ import entities.qualification
 
 SQLModel.metadata.create_all(engine)
 
+_SCHEMA_UPGRADES = [
+    "ALTER TABLE {schema}.subject ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false",
+    "ALTER TABLE {schema}.member ADD COLUMN IF NOT EXISTS joined DATE",
+]
+"""Statements that bring an older database up to the current entities.
+
+`create_all` only creates tables that do not exist yet, so a column added to an entity never
+reaches a database that already has the table. Every statement here runs on every startup and
+must therefore be idempotent and additive — `ADD COLUMN IF NOT EXISTS`, never a drop, a rename
+or anything that can lose data. Anything that cannot be expressed that way does not belong
+here and has to be applied by hand against a dump first.
+"""
+
+with engine.connect() as conn:
+    for upgrade in _SCHEMA_UPGRADES:
+        conn.execute(sqlalchemy.text(upgrade.format(schema=schema)))
+    conn.commit()
+log.info(f"Applied {len(_SCHEMA_UPGRADES)} schema upgrades")
+
+
+def _function_names(sql: str) -> list[str]:
+    """Names of every function functions.sql defines."""
+    return sorted(set(re.findall(r"CREATE OR REPLACE FUNCTION\s+[\w.]+\.(\w+)", sql)))
+
+
+def _drop_functions(conn, names: list[str]) -> None:
+    """Drops the file's functions before redeploying them.
+
+    `CREATE OR REPLACE FUNCTION` refuses to change a function's return type, so a function that
+    gains or loses a result column can never be replaced in a database that already has the old
+    one. Dropping first makes functions.sql the single source of truth: whatever it says is what
+    the database ends up with. Only functions the file itself defines are touched.
+    """
+    signatures = conn.execute(sqlalchemy.text(
+        "SELECT p.oid::regprocedure::text AS signature "
+        "FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace "
+        "WHERE n.nspname = :schema AND p.proname = ANY(:names)"
+    ), {"schema": schema, "names": names}).all()
+    for row in signatures:
+        conn.execute(sqlalchemy.text(f"DROP FUNCTION {row.signature}"))
+
+
 def _split_functions(sql: str) -> list[str]:
     """Split functions.sql into one statement per function body, dropping the header
     comments that precede each one. A line ending in `$$;` closes a definition."""
@@ -62,6 +107,7 @@ if os.path.exists(_functions_sql):
         with open(_functions_sql) as f:
             sql = f.read().replace("{{schema}}", schema)
         statements = _split_functions(sql)
+        _drop_functions(conn, _function_names(sql))
         for statement in statements:
             conn.execute(sqlalchemy.text(statement))
         conn.commit()

@@ -53,10 +53,18 @@ ADMIN_PASSWORD=... MEMBER_PASSWORD=... TOKEN_SECRET=... docker compose up -d
 | `TOKEN_SECRET` | `change-me-in-production` | HMAC secret for login tokens |
 | `TOKEN_EXPIRY_SECONDS` | `86400` | How long a login lasts |
 | `CORS_ORIGINS` | `*` | Comma-separated allowed origins |
+| `DB_ECHO` | `false` | Log every SQL statement and its parameters — debugging only |
 
 The database schema, the tables and the SQL functions used by the statistics are created on
 startup. `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION` do that work, so
 starting the app never touches data that is already there.
+
+A column added to an entity is a different matter: `create_all` skips a table that already
+exists, so the column never appears. `_SCHEMA_UPGRADES` in `backend/src/data/__init__.py`
+closes that gap — a list of `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements that run on
+every startup. Add one line there when an entity gains a column and the upgrade takes care of
+itself. Everything in that list has to stay idempotent and additive; a drop, a rename or a
+type change does not belong there.
 
 What the database holds is years of call history, and every statistic is computed from it —
 there is no second copy anywhere. So: never drop the schema to get a model change in. If an
@@ -135,6 +143,9 @@ is thin either way. It's on the list.
 - The auth is homemade: two shared accounts and an HMAC-signed token in localStorage. Good
   enough behind a VPN or a reverse proxy with TLS, not good enough on the open internet.
 - No audit log — you can't tell who entered or deleted a call.
+- Members carry a join date, but it is blank for everyone entered before it existed. Roster
+  figures treat a blank join date as "was always there", so the numbers for past years only
+  become exact once the dates are filled in on the member pages.
 - The UI is German only. Every string lives in `frontend/src/i18n/de.ts` and goes through
   vue-i18n, so a second language is a new catalogue file and a locale switch, not a hunt
   through the templates. Backend error messages are plain German strings and are not part of
