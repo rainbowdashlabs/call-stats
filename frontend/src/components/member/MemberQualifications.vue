@@ -9,6 +9,7 @@ import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
 import {ADateTime} from "../../scripts/datetime.ts";
 import SimpleButton from "../base/buttons/SimpleButton.vue";
 import DatePicker from "../base/datetime/DatePicker.vue";
+import {t} from "../../i18n";
 
 const props = defineProps({
   member: {
@@ -20,12 +21,12 @@ const member_qualifications = ref<MemberQualification[]>([])
 const qualifications = ref<Qualification[]>([])
 const loading = ref(true)
 
-const selected_qualification = ref<Qualification>({id: -1, name: "loading..."})
+const selected_qualification = ref<Qualification>({id: -1, name: t("common.loading")})
 const selected_date = ref<ADateTime>(ADateTime.now().withoutTime())
 
-function qualificationName(qualification: MemberQualification): String {
-  let index = qualifications.value.findIndex(v => v.id === qualification.qualification_id)
-  return qualifications.value[index]!.name
+function qualificationName(qualification: MemberQualification): string {
+  const match = qualifications.value.find(v => v.id === qualification.qualification_id)
+  return match?.name ?? ''
 }
 
 async function add() {
@@ -59,10 +60,10 @@ onMounted(load)
 
 <template>
   <div>
-    <div>Qualifications</div>
-    <div v-if="loading" class="p-2">Laden...</div>
+    <div>{{ t('members.qualifications.title') }}</div>
+    <div v-if="loading" class="p-2">{{ t('common.loading') }}</div>
     <div v-for="qualification in member_qualifications" class="flex gap-2">
-      {{ qualificationName(qualification) }} seit {{ qualification.since }}
+      {{ qualificationName(qualification) }} {{ t('members.qualifications.since') }} {{ qualification.since }}
       <SimpleButton @click="remove(qualification)">🗑️</SimpleButton>
     </div>
 
@@ -74,7 +75,7 @@ onMounted(load)
                    :options="qualifications"
                    strict/>
       <DatePicker v-model="selected_date"/>
-      <ConfirmButton @click="add">Add</ConfirmButton>
+      <ConfirmButton @click="add">{{ t('common.add') }}</ConfirmButton>
     </div>
   </div>
 </template>

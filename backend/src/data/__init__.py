@@ -40,27 +40,32 @@ import entities.qualification
 
 SQLModel.metadata.create_all(engine)
 
-# Deploy SQL functions (idempotent via CREATE OR REPLACE)
+def _split_functions(sql: str) -> list[str]:
+    """Split functions.sql into one statement per function body, dropping the header
+    comments that precede each one. A line ending in `$$;` closes a definition."""
+    statements = []
+    current = []
+    for line in sql.split('\n'):
+        stripped = line.strip()
+        if not current and (not stripped or stripped.startswith('--')):
+            continue
+        current.append(line)
+        if stripped.endswith('$$;'):
+            statements.append('\n'.join(current))
+            current = []
+    return statements
+
+
 _functions_sql = os.path.join(os.path.dirname(__file__), "functions.sql")
 if os.path.exists(_functions_sql):
     with engine.connect() as conn:
         with open(_functions_sql) as f:
-            sql = f.read()
-        # Split on $$ block boundaries — each CREATE OR REPLACE FUNCTION is a separate statement
-        statements = []
-        current = []
-        for line in sql.split('\n'):
-            current.append(line)
-            # A line ending with $$; marks the end of a function definition
-            if line.strip().endswith('$$;'):
-                statements.append('\n'.join(current))
-                current = []
-        for stmt in statements:
-            stmt = stmt.strip()
-            if stmt and not stmt.startswith('--'):
-                conn.execute(sqlalchemy.text(stmt))
+            sql = f.read().replace("{{schema}}", schema)
+        statements = _split_functions(sql)
+        for statement in statements:
+            conn.execute(sqlalchemy.text(statement))
         conn.commit()
-    log.info("SQL functions deployed successfully")
+    log.info(f"Deployed {len(statements)} SQL functions")
 
 def get_session():
     with Session(engine) as session:
