@@ -4,12 +4,10 @@ import App from './App.vue'
 import router from './router'
 import {i18n} from './i18n'
 import {library} from "@fortawesome/fontawesome-svg-core";
-import { far } from '@fortawesome/free-regular-svg-icons'
-import { fas } from '@fortawesome/free-solid-svg-icons'
+import {faAngleDown, faAngleUp, faArrowLeft, faArrowRight} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-// Add the icon packs you use to the library
-library.add(far, fas)
+library.add(faAngleDown, faAngleUp, faArrowLeft, faArrowRight)
 
 createApp(App)
     .use(router)
