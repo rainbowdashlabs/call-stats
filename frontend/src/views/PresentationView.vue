@@ -435,6 +435,7 @@ const slides = computed<Slide[]>(() => {
       tiles: [
         {value: thisYearMembership.roster_members, label: t('statistics.charts.roster')},
         {value: thisYearMembership.participating_members, label: t('statistics.charts.participating')},
+        {value: thisYearMembership.joined_in_year, label: t('statistics.charts.joined')},
         {value: thisYearMembership.retired_in_year, label: t('statistics.charts.retired')}
       ]
     })
@@ -464,7 +465,8 @@ const slides = computed<Slide[]>(() => {
       yAxis: valueAxis(t('statistics.charts.members'), theme),
       series: [
         {name: t('statistics.charts.roster'), type: 'bar', data: d.membership.map(m => m.roster_members), itemStyle: {color: SERIES_COLORS[7]}},
-        {name: t('statistics.charts.participating'), type: 'bar', data: d.membership.map(m => m.participating_members)}
+        {name: t('statistics.charts.participating'), type: 'bar', data: d.membership.map(m => m.participating_members)},
+        {name: t('statistics.charts.joined'), type: 'line', data: d.membership.map(m => m.joined_in_year)}
       ]
     }
   })

@@ -301,6 +301,7 @@ class CombinedMemberStats(BaseModel):
 class MembershipEntry(BaseModel):
     year: int
     roster_members: int
+    joined_in_year: int
     retired_in_year: int
     participating_members: int
 
@@ -428,7 +429,7 @@ def get_membership(*, session: Session = Depends(get_session), year: int,
                    years_back: int = DEFAULT_YEARS_BACK) -> list[MembershipEntry]:
     rows = _call(session, "get_membership", year_from=year - years_back + 1, year_to=year)
     return [MembershipEntry(year=r.year, roster_members=r.roster_members,
-                            retired_in_year=r.retired_in_year,
+                            joined_in_year=r.joined_in_year, retired_in_year=r.retired_in_year,
                             participating_members=r.participating_members) for r in rows]
 
 

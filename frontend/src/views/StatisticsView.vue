@@ -585,6 +585,7 @@ const membershipOption = computed(() => ({
   series: [
     {name: t('statistics.charts.roster'), type: 'bar', data: membership.value.map(m => m.roster_members), itemStyle: {color: SERIES_COLORS[7]}},
     {name: t('statistics.charts.participating'), type: 'bar', data: membership.value.map(m => m.participating_members)},
+    {name: t('statistics.charts.joined'), type: 'line', data: membership.value.map(m => m.joined_in_year)},
     {name: t('statistics.charts.retired'), type: 'line', data: membership.value.map(m => m.retired_in_year)}
   ],
   legend: legend(theme, {top: 30}),

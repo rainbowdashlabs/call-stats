@@ -22,6 +22,7 @@ class MemberQualification(SQLModel, table=True):
 class Member(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(default=None)
+    joined: Optional[date] = Field(default=None, sa_type=EpochDate)
     retired: Optional[date] = Field(default=None, sa_type=EpochDate)
     qualifications: list[MemberQualification] = Relationship(back_populates="member",
                                                              cascade_delete=True)
@@ -34,12 +35,14 @@ class Member(SQLModel, table=True):
 
     def update(self, member: "Member"):
         self.name = member.name
+        self.joined = member.joined
         self.retired = member.retired
 
 class MemberUsage(BaseModel):
     """A member together with how often they attended recent calls, for ranking in pickers."""
     id: int
     name: str
+    joined: Optional[date] = None
     retired: Optional[date] = None
     usage: int
 

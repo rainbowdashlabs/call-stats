@@ -19,6 +19,8 @@ const edit_name = ref(false)
 const new_name = ref('')
 const edit_retire = ref(false)
 const retire_date = ref(todayDate())
+const edit_joined = ref(false)
+const joined_date = ref(todayDate())
 
 async function load(id: number | null = null) {
   if (!id) {
@@ -38,6 +40,17 @@ async function updateRetire() {
   member.value!.retired = parseDate(retire_date.value)
   member.value = await updateMember(member.value!)
   edit_retire.value = false
+}
+
+async function updateJoined() {
+  member.value!.joined = parseDate(joined_date.value)
+  member.value = await updateMember(member.value!)
+  edit_joined.value = false
+}
+
+async function removeJoined() {
+  member.value!.joined = null
+  member.value = await updateMember(member.value!)
 }
 
 async function removeRetire() {
@@ -68,10 +81,31 @@ onMounted(load)
       </div>
     </div>
 
+    <div class="flex justify-end">{{ t('members.joined') }}</div>
+    <div class="flex justify-start gap-2">
+      <div v-if="member?.joined" class="flex gap-2">
+        {{ formatDate(member!.joined!) }}
+        <Tooltip v-if="isAdmin()" :hoverText="t('members.removeJoined')">
+          <SimpleButton @click="removeJoined">🗑️</SimpleButton>
+        </Tooltip>
+      </div>
+      <div v-else-if="edit_joined" class="flex gap-2">
+        <input type="date" v-model="joined_date">
+        <SimpleButton @click="updateJoined">✔️</SimpleButton>
+        <SimpleButton @click="edit_joined = false">❌</SimpleButton>
+      </div>
+      <div v-else class="flex gap-2">
+        {{ t('members.joinedUnknown') }}
+        <Tooltip v-if="isAdmin()" :hoverText="t('members.setJoined')">
+          <SimpleButton @click="edit_joined = true">📅</SimpleButton>
+        </Tooltip>
+      </div>
+    </div>
+
     <div class="flex justify-end">{{ t('members.retired') }}</div>
     <div class="flex justify-start gap-2">
       <div v-if="member?.retired" class="flex gap-2">
-        {{ formatDate(member!.retired as number) }}
+        {{ formatDate(member!.retired!) }}
         <Tooltip v-if="isAdmin()" :hoverText="t('members.removeRetirement')">
           <SimpleButton @click="removeRetire">🗑️</SimpleButton>
         </Tooltip>

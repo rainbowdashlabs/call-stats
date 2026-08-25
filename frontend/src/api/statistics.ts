@@ -251,6 +251,7 @@ export interface CombinedMemberStats {
 export interface MembershipEntry {
     year: number
     roster_members: number
+    joined_in_year: number
     retired_in_year: number
     participating_members: number
 }

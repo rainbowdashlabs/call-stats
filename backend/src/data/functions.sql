@@ -586,7 +586,8 @@ WITH
         FROM
             years y
                 JOIN {{schema}}.member m
-                ON m.retired IS NULL OR extract(YEAR FROM m.retired) >= y.year
+                ON ( m.joined IS NULL OR extract(YEAR FROM m.joined) <= y.year )
+                    AND ( m.retired IS NULL OR extract(YEAR FROM m.retired) >= y.year )
         GROUP BY y.year
           ),
     participating AS (
@@ -814,7 +815,8 @@ WITH
                AND extract(YEAR FROM c.start) = _year) AS calls
         FROM
             {{schema}}.member m
-        WHERE m.retired IS NULL OR extract(YEAR FROM m.retired) >= _year
+        WHERE ( m.joined IS NULL OR extract(YEAR FROM m.joined) <= _year )
+  AND ( m.retired IS NULL OR extract(YEAR FROM m.retired) >= _year )
                   ),
     bucketed AS (
         SELECT
@@ -936,7 +938,8 @@ FROM
     {{schema}}.member m
         LEFT JOIN {{schema}}.memberexercise me ON me.member_id = m.id
         LEFT JOIN exercises e ON e.id = me.exercise_id
-WHERE m.retired IS NULL OR extract(YEAR FROM m.retired) >= _year
+WHERE ( m.joined IS NULL OR extract(YEAR FROM m.joined) <= _year )
+  AND ( m.retired IS NULL OR extract(YEAR FROM m.retired) >= _year )
 GROUP BY m.id, m.name
 ORDER BY count(e.id) DESC, m.name;
 $$;
@@ -1072,7 +1075,8 @@ FROM
         LEFT JOIN calls c ON c.member_id = m.id
         LEFT JOIN exercises e ON e.member_id = m.id
         LEFT JOIN youth y ON y.member_id = m.id
-WHERE m.retired IS NULL OR extract(YEAR FROM m.retired) >= _year
+WHERE ( m.joined IS NULL OR extract(YEAR FROM m.joined) <= _year )
+  AND ( m.retired IS NULL OR extract(YEAR FROM m.retired) >= _year )
 ORDER BY 9 DESC, m.name;
 $$;
 
@@ -1164,6 +1168,7 @@ CREATE OR REPLACE FUNCTION {{schema}}.get_membership(
     RETURNS TABLE (
         YEAR                  INTEGER,
         ROSTER_MEMBERS        BIGINT,
+        JOINED_IN_YEAR        BIGINT,
         RETIRED_IN_YEAR       BIGINT,
         PARTICIPATING_MEMBERS BIGINT
     )
@@ -1174,6 +1179,9 @@ $$
 SELECT
     s.year,
     s.roster_members,
+    (SELECT count(1)
+     FROM {{schema}}.member m
+     WHERE extract(YEAR FROM m.joined) = s.year),
     (SELECT count(1)
      FROM {{schema}}.member m
      WHERE extract(YEAR FROM m.retired) = s.year),
