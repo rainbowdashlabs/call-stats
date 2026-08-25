@@ -1,6 +1,7 @@
 import type {MultiSelectGroup, Subject} from '../interfaces/Subject'
 import {getHttpClient} from './http'
 import {emitError} from '../events/bus'
+import {t} from '../i18n'
 
 const http = getHttpClient()
 
@@ -14,7 +15,7 @@ export async function listSubjects(grouped: boolean = true): Promise<MultiSelect
             return data
         }
     } catch (e) {
-        emitError(e, { message: 'Failed to load subjects.' })
+        emitError(e, { message: t('errors.subjectsLoad') })
         throw e
     }
 }
@@ -24,7 +25,7 @@ export async function createSubject(subject: Subject): Promise<Subject> {
         const {data} = await http.post<Subject>('/api/subjects', subject)
         return data
     } catch (e) {
-        emitError(e, { message: 'Failed to create subject.' })
+        emitError(e, { message: t('errors.subjectCreate') })
         throw e
     }
 }
@@ -34,7 +35,7 @@ export async function updateSubject(id: number, subject: Subject): Promise<Subje
         const {data} = await http.patch<Subject>(`/api/subject/${id}`, subject)
         return data
     } catch (e) {
-        emitError(e, { message: 'Failed to update subject.' })
+        emitError(e, { message: t('errors.subjectUpdate') })
         throw e
     }
 }
@@ -43,7 +44,7 @@ export async function deleteSubject(id: number): Promise<void> {
     try {
         await http.delete(`/api/subject/${id}`)
     } catch (e) {
-        emitError(e, { message: 'Failed to delete subject.' })
+        emitError(e, { message: t('errors.subjectDelete') })
         throw e
     }
 }

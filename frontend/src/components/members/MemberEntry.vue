@@ -2,6 +2,8 @@
 import type {PropType} from "vue";
 import type {Member} from "../../interfaces/Member.ts";
 import router from "../../router";
+import {formatDate} from "../../scripts/datetime.ts";
+import {t} from "../../i18n";
 
 const props = defineProps({
   member: {
@@ -20,8 +22,8 @@ async function edit() {
     <div>{{ member.id }}</div>
     <div class="col-span-3">{{ member.name }}</div>
     <div>
-      <span v-if="member.retired">bis {{ new Date((member.retired as number) * 1000).toLocaleDateString() }}</span>
-      <span v-else>Aktiv</span>
+      <span v-if="member.retired">{{ t('members.until', { date: formatDate(member.retired as number) }) }}</span>
+      <span v-else>{{ t('members.active') }}</span>
     </div>
     <div>✏️</div>
   </div>

@@ -7,6 +7,7 @@ import MemberEntry from "../components/members/MemberEntry.vue";
 import ConfirmButton from "../components/base/buttons/derivates/ConfirmButton.vue";
 import router from "../router";
 import {isAdmin} from "../auth.ts";
+import {t} from "../i18n";
 
 const members = ref<Member[]>([])
 const loading = ref(false)
@@ -36,17 +37,17 @@ onMounted(load)
 </script>
 
 <template>
-  <div>Members</div>
+  <div>{{ t('members.title') }}</div>
 
   <div v-if="isAdmin()" class="flex gap-2">
-    <input type="text" placeholder="name" v-model="name">
-    <ConfirmButton @click="create" :disabled="!canCreate">Create</ConfirmButton>
+    <input type="text" :placeholder="t('common.name')" v-model="name">
+    <ConfirmButton @click="create" :disabled="!canCreate">{{ t('common.create') }}</ConfirmButton>
   </div>
 
   <div class="flex gap-2">
-    Show retired: <input type="checkbox" v-model="show_retired">
+    {{ t('members.showRetired') }} <input type="checkbox" v-model="show_retired">
   </div>
-  <div v-if="loading" class="p-4">Laden...</div>
-  <div v-else-if="members.length === 0" class="p-4">Keine Mitglieder gefunden.</div>
+  <div v-if="loading" class="p-4">{{ t('common.loading') }}</div>
+  <div v-else-if="members.length === 0" class="p-4">{{ t('members.empty') }}</div>
   <MemberEntry v-else v-for="member in members" :member="member"/>
 </template>

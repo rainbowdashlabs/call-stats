@@ -55,9 +55,14 @@ ADMIN_PASSWORD=... MEMBER_PASSWORD=... TOKEN_SECRET=... docker compose up -d
 | `CORS_ORIGINS` | `*` | Comma-separated allowed origins |
 
 The database schema, the tables and the SQL functions used by the statistics are created on
-startup. There are no migrations — if I change an entity I usually just drop the schema and
-start over, which is fine for the amount of data this thing holds. Keep a `pg_dump` around if
-your data matters.
+startup. `CREATE TABLE IF NOT EXISTS` and `CREATE OR REPLACE FUNCTION` do that work, so
+starting the app never touches data that is already there.
+
+What the database holds is years of call history, and every statistic is computed from it —
+there is no second copy anywhere. So: never drop the schema to get a model change in. If an
+entity changes shape, write the `ALTER TABLE` yourself, run it against a `pg_dump` restore
+first to see that it does what you think, and only then against the real database. Take that
+dump before every upgrade regardless.
 
 A ready-built image is published to GHCR on every push to `main` (see
 `.github/workflows/build-and-publish.yml`), so on a server you can point `compose.yml` at
@@ -101,12 +106,15 @@ frontend/src/
   components/ the reusable bits, generic ones under components/base
   api/        axios wrappers, one file per resource
   interfaces/ the TypeScript side of the backend models
+  i18n/       vue-i18n setup and the German string catalogue
 ```
 
 Two things worth knowing before you touch the code:
 
 - Dates and times go over the API as unix timestamps. The backend converts them with a custom
-  `EpochDate` type, the frontend has helpers in `src/scripts`.
+  `EpochDate` type, the frontend has helpers in `src/scripts` that format them as `de-DE`.
+- No user-facing text belongs in a template. Add a key to `src/i18n/de.ts` and use
+  `t('some.key')` — `import {t} from '.../i18n'` gives you the bound global.
 - List endpoints return a `Page` object (`page`, `size`, `pages`, `entries`), not a bare array.
 
 ### Tests
@@ -127,5 +135,7 @@ is thin either way. It's on the list.
 - The auth is homemade: two shared accounts and an HMAC-signed token in localStorage. Good
   enough behind a VPN or a reverse proxy with TLS, not good enough on the open internet.
 - No audit log — you can't tell who entered or deleted a call.
-- The UI is in a mix of English and German, because the labels come from what people actually
-  say in the fire station and I never got around to real i18n.
+- The UI is German only. Every string lives in `frontend/src/i18n/de.ts` and goes through
+  vue-i18n, so a second language is a new catalogue file and a locale switch, not a hunt
+  through the templates. Backend error messages are plain German strings and are not part of
+  that catalogue.

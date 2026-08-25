@@ -1,6 +1,7 @@
 import {getHttpClient} from './http'
 import type {Member} from "../interfaces/Member.ts";
 import {emitError} from '../events/bus'
+import {t} from '../i18n'
 
 const http = getHttpClient()
 
@@ -9,7 +10,7 @@ export async function listMembers(active: boolean = false, active_after: number 
         const {data} = await http.get<Member[]>('/api/members', {params: {filter_active: active, active_after: active_after}})
         return data
     } catch (e) {
-        emitError(e, { message: 'Failed to load members.' })
+        emitError(e, { message: t('errors.membersLoad') })
         throw e
     }
 }
@@ -19,7 +20,7 @@ export async function createMember(member: Member): Promise<Member> {
         const {data} = await http.post<Member>('/api/members', member)
         return data
     } catch (e) {
-        emitError(e, { message: 'Failed to create member.' })
+        emitError(e, { message: t('errors.memberCreate') })
         throw e
     }
 }

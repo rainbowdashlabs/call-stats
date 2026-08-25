@@ -1,6 +1,8 @@
 // Simple global event bus for the app
 // Provides on/off/emit and a helper emitError to standardize error events
 
+import {t} from '../i18n'
+
 export type EventHandler<T = any> = (payload: T) => void
 
 class EventBus {
@@ -41,7 +43,7 @@ export function emitSuccess(message: string) {
 
 // Normalize various error shapes (AxiosError / Fetch / generic Error / string)
 export function emitError(err: unknown, extra?: Partial<ErrorEventPayload>) {
-  let payload: ErrorEventPayload = { message: 'An unexpected error occurred.' }
+  let payload: ErrorEventPayload = { message: t('errors.unexpected') }
 
   // Try to detect Axios-like error
   const anyErr: any = err as any

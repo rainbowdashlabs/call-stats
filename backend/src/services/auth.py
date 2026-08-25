@@ -67,16 +67,16 @@ def _get_token_from_request(request: Request) -> str | None:
 def get_current_user(request: Request) -> TokenPayload:
     token = _get_token_from_request(request)
     if not token:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Nicht angemeldet")
     payload = _verify_token(token)
     if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail="Token ungültig oder abgelaufen")
     return payload
 
 
 def require_admin(user: TokenPayload = Depends(get_current_user)) -> TokenPayload:
     if user.role != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+        raise HTTPException(status_code=403, detail="Adminrechte erforderlich")
     return user
 
 
@@ -87,7 +87,7 @@ def login(request: LoginRequest) -> LoginResponse:
     elif request.username == "member" and request.password == MEMBER_PASSWORD:
         role = "member"
     else:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch")
 
     payload = {
         "username": request.username,

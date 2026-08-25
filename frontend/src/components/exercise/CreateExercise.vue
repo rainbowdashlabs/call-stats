@@ -9,6 +9,7 @@ import {emitSuccess} from "../../events/bus.ts";
 import DatePicker from "../base/datetime/DatePicker.vue";
 import TextInput from "../base/input/TextInput.vue";
 import NumberInput from "../base/input/NumberInput.vue";
+import {t} from "../../i18n";
 
 const members = ref<Member[]>([])
 const selectedMembers = ref<Member[]>([])
@@ -35,7 +36,7 @@ async function submit() {
       duration: minutes.value + hours.value * 60
     })
     await addExerciseMembers(exercise, selectedMembers.value.map(e => e.id!))
-    emitSuccess('Uebung erfolgreich erstellt.')
+    emitSuccess(t('exercises.created'))
     selectedMembers.value = []
     subject.value = ''
     hours.value = 3
@@ -52,29 +53,29 @@ watch(() => date.value.toUnixTimestamp(), async (newDate) => {
 
 <template>
   <div class="flex flex-col gap-2">
-    Thema
+    {{ t('common.topic') }}
     <TextInput v-model="subject"/>
     <div class="flex gap-2">
       <div>
-        Datum
+        {{ t('common.date') }}
         <DatePicker v-model="date"/>
       </div>
       <div>
-        Stunden
+        {{ t('common.hours') }}
         <NumberInput v-model="hours"/>
       </div>
       <div>
-        Minuten
+        {{ t('common.minutes') }}
         <NumberInput v-model="minutes"/>
       </div>
     </div>
     <div v-if="subject">
-      Members
+      {{ t('common.members') }}
       <ButtonMultiSelect v-model="selectedMembers" :options="members" :value-mapper="(e:Member) => e.name"
                          :key-mapper="(e:Member) => e.id"/>
     </div>
 
-    <button @click="submit" :disabled="!canSubmit" class="bg-green-500 text-white p-2 disabled:opacity-50 disabled:cursor-not-allowed">Create</button>
+    <button @click="submit" :disabled="!canSubmit" class="bg-green-500 text-white p-2 disabled:opacity-50 disabled:cursor-not-allowed">{{ t('common.create') }}</button>
   </div>
 
 

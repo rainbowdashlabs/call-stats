@@ -59,7 +59,7 @@ def get_by_id(*, session: Session = Depends(get_session), id: int) -> FullCall:
 def update(*, session: Session = Depends(get_session), new: Call):
     old = _get_call_by_id(session=session, id=new.id)
     if old.start != new.start:
-        raise ValueError("Start date cannot be changed")
+        raise ValueError("Startzeitpunkt kann nicht geändert werden")
     session.add(new)
     session.commit()
     session.refresh(new)

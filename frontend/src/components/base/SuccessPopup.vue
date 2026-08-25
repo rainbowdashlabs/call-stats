@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, reactive} from 'vue'
 import {bus, type SuccessEventPayload} from '../../events/bus'
+import {t} from '../../i18n'
 
 let idSeq = 1
 
@@ -31,7 +32,7 @@ function dismiss(id: number) {
   <div class="success-container" v-if="state.items.length">
     <div v-for="it in state.items" :key="it.id" class="success-card">
       <div class="msg">{{ it.message }}</div>
-      <button class="close" @click="dismiss(it.id)" aria-label="Close">&times;</button>
+      <button class="close" @click="dismiss(it.id)" :aria-label="t('common.close')">&times;</button>
     </div>
   </div>
 </template>

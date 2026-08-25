@@ -6,9 +6,10 @@ import {getMember, updateMember} from "../api/member.ts";
 import MemberQualifications from "../components/member/MemberQualifications.vue";
 import MemberActivity from "../components/member/MemberActivity.vue";
 import SimpleButton from "../components/base/buttons/SimpleButton.vue";
-import {parseDate, todayDate} from "../scripts/datetime.ts";
+import {formatDate, parseDate, todayDate} from "../scripts/datetime.ts";
 import Tooltip from "../components/base/Tooltip.vue";
 import {isAdmin} from "../auth.ts";
+import {t} from "../i18n";
 
 const member = ref<Member>()
 
@@ -51,10 +52,10 @@ onMounted(load)
 
 <template>
   <div class="grid grid-cols-2 gap-2">
-    <div class="flex justify-end">ID:</div>
+    <div class="flex justify-end">{{ t('common.id') }}</div>
     <div class="flex justify-start">{{ member?.id }}</div>
 
-    <div class="flex justify-end">Name:</div>
+    <div class="flex justify-end">{{ t('common.name') }}</div>
     <div class="flex gap-2 justify-start">
       <div v-if="!edit_name" class="flex gap-2">
         <div>{{ member?.name }}</div>
@@ -67,11 +68,11 @@ onMounted(load)
       </div>
     </div>
 
-    <div class="flex justify-end">Retired:</div>
+    <div class="flex justify-end">{{ t('members.retired') }}</div>
     <div class="flex justify-start gap-2">
       <div v-if="member?.retired" class="flex gap-2">
-        {{ new Date(member!.retired as number * 1000).toLocaleDateString() }}
-        <Tooltip v-if="isAdmin()" hoverText="Remove Retirement">
+        {{ formatDate(member!.retired as number) }}
+        <Tooltip v-if="isAdmin()" :hoverText="t('members.removeRetirement')">
           <SimpleButton @click="removeRetire">🗑️</SimpleButton>
         </Tooltip>
       </div>
@@ -82,8 +83,8 @@ onMounted(load)
           <SimpleButton @click="edit_retire = false">❌</SimpleButton>
         </div>
         <div v-else class="flex gap-2">
-          Aktiv
-          <Tooltip v-if="isAdmin()" hoverText="Retire Member">
+          {{ t('members.active') }}
+          <Tooltip v-if="isAdmin()" :hoverText="t('members.retire')">
             <SimpleButton @click="edit_retire = true">🚪</SimpleButton>
           </Tooltip>
         </div>

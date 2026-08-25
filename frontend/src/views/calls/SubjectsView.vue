@@ -4,6 +4,7 @@ import SubjectForm from '../../components/subjects/SubjectForm.vue'
 import type {MultiSelectGroup, Subject} from '../../interfaces/Subject'
 import {createSubject, listSubjects} from '../../api/subjects'
 import SubjectList from "../../components/subjects/SubjectList.vue";
+import {t} from "../../i18n";
 
 const subjects = ref<MultiSelectGroup[]>([])
 const loading = ref(false)
@@ -15,7 +16,7 @@ async function load() {
   try {
     subjects.value = await listSubjects(true) as MultiSelectGroup[]
   } catch (e: any) {
-    error.value = e?.message ?? 'Failed to load subjects.'
+    error.value = e?.message ?? t('errors.subjectsLoad')
   } finally {
     loading.value = false
   }
@@ -36,7 +37,7 @@ async function handleCreate(subject: Subject) {
       subjects.value.push({label: created.group, items: [{label: created.name, value: created.id!}]})
     }
   } catch (e: any) {
-    alert(e?.message ?? 'Failed to create subject')
+    alert(e?.message ?? t('errors.subjectCreate'))
   }
 }
 

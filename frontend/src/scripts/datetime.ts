@@ -15,7 +15,11 @@ export function today(): string {
 }
 
 export function formatDateTime(date: string): string {
-    return new Date(date).toLocaleString()
+    return new Date(date).toLocaleString('de-DE')
+}
+
+export function formatDate(timestamp: number): string {
+    return new Date(timestamp * 1000).toLocaleDateString('de-DE')
 }
 
 export function getDaysInMonth(year: number, month: number): number {
@@ -97,6 +101,12 @@ export class ADateTime implements ATime, ADate{
 
     public nextDay(): ADateTime {
         return this.addDays(1)
+    }
+
+    public addMinutes(minutes: number): ADateTime {
+        const date = this.toDate()
+        date.setMinutes(date.getMinutes() + minutes)
+        return ADateTime.fromDate(date)
     }
 
     public addDays(days: number): ADateTime {

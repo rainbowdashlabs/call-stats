@@ -4,6 +4,7 @@ import ErrorPopup from './components/base/ErrorPopup.vue'
 import SuccessPopup from './components/base/SuccessPopup.vue'
 import {auth, clearAuth, isAdmin, isAuthenticated} from './auth'
 import router from './router'
+import {t} from './i18n'
 
 function logout() {
   clearAuth()
@@ -16,11 +17,11 @@ function logout() {
     <header v-if="isAuthenticated()" class="header">
       <div class="header-inner">
         <nav class="nav">
-          <RouterLink to="/calls">Calls</RouterLink>
-          <RouterLink v-if="isAdmin()" to="/exercise">Exercise</RouterLink>
-          <RouterLink v-if="isAdmin()" to="/youth">Youth</RouterLink>
-          <RouterLink v-if="isAdmin()" to="/members">Members</RouterLink>
-          <RouterLink to="/statistics">Statistics</RouterLink>
+          <RouterLink to="/calls">{{ t('nav.calls') }}</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/exercise">{{ t('nav.exercises') }}</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/youth">{{ t('nav.youth') }}</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/members">{{ t('nav.members') }}</RouterLink>
+          <RouterLink to="/statistics">{{ t('nav.statistics') }}</RouterLink>
           <button class="logout-btn" @click="logout">{{ auth.username }} ⏻</button>
         </nav>
       </div>
@@ -37,7 +38,7 @@ function logout() {
 
     <footer class="footer">
       <div class="footer-inner">
-        <p>© {{ new Date().getFullYear() }} CallStats. All rights reserved.</p>
+        <p>{{ t('app.copyright', { year: new Date().getFullYear() }) }}</p>
       </div>
     </footer>
   </div>

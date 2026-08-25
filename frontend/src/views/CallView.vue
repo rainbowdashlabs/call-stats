@@ -9,6 +9,7 @@ import router from "../router";
 import {formatDateTime} from "../scripts/datetime.ts";
 import {emitSuccess} from "../events/bus.ts";
 import {isAdmin} from "../auth.ts";
+import {t} from "../i18n";
 
 const route = useRoute()
 
@@ -52,7 +53,7 @@ async function saveNote() {
   })
   call.value.note = editNote.value || null
   editingNote.value = false
-  emitSuccess('Notiz gespeichert.')
+  emitSuccess(t('calls.noteSaved'))
 }
 
 function startEditAbort() {
@@ -72,7 +73,7 @@ async function saveAbort() {
   })
   call.value.abort_reason = editAbort.value || null
   editingAbort.value = false
-  emitSuccess('Abbruchgrund gespeichert.')
+  emitSuccess(t('calls.abortSaved'))
 }
 
 const subjects = computed(() => {
@@ -103,7 +104,7 @@ onMounted(load)
     <div class="mt-2">{{ members }}</div>
 
     <div class="mt-2 flex items-center gap-2">
-      <span class="font-bold">Notiz:</span>
+      <span class="font-bold">{{ t('calls.note') }}</span>
       <div v-if="!editingNote" class="flex items-center gap-2">
         <span>{{ call.note ?? '-' }}</span>
         <SimpleButton v-if="isAdmin()" @click="startEditNote">✏️</SimpleButton>
@@ -116,7 +117,7 @@ onMounted(load)
     </div>
 
     <div class="mt-2 flex items-center gap-2">
-      <span class="font-bold">Abbruchgrund:</span>
+      <span class="font-bold">{{ t('calls.abortLabel') }}</span>
       <div v-if="!editingAbort" class="flex items-center gap-2">
         <span>{{ call.abort_reason ?? '-' }}</span>
         <SimpleButton v-if="isAdmin()" @click="startEditAbort">✏️</SimpleButton>
@@ -129,8 +130,8 @@ onMounted(load)
     </div>
 
     <div v-if="isAdmin()" class="flex gap-2 mt-4">
-      <ErrorButton @click="remove">{{ confirmDelete ? 'Wirklich loeschen?' : 'Delete' }}</ErrorButton>
-      <button v-if="confirmDelete" class="bg-gray-500 text-white p-2 rounded-md" @click="confirmDelete = false">Abbrechen</button>
+      <ErrorButton @click="remove">{{ confirmDelete ? t('common.deleteConfirm') : t('common.delete') }}</ErrorButton>
+      <button v-if="confirmDelete" class="bg-gray-500 text-white p-2 rounded-md" @click="confirmDelete = false">{{ t('common.cancel') }}</button>
     </div>
   </div>
 </template>

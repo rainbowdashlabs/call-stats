@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, reactive} from 'vue'
 import {bus, type ErrorEventPayload} from '../../events/bus'
+import {t} from '../../i18n'
 
 let idSeq = 1
 
@@ -29,8 +30,8 @@ function dismiss(id: number) {
   <div class="error-container" v-if="state.items.length">
     <div v-for="it in state.items" :key="it.id" class="error-card">
       <div class="msg">{{ it.message }}</div>
-      <div class="meta" v-if="it.code">Code: {{ it.code }}</div>
-      <button class="close" @click="dismiss(it.id)" aria-label="Close">×</button>
+      <div class="meta" v-if="it.code">{{ t('common.code', { code: it.code }) }}</div>
+      <button class="close" @click="dismiss(it.id)" :aria-label="t('common.close')">×</button>
     </div>
   </div>
 </template>

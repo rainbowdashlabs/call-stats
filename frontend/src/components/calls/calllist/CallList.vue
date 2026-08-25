@@ -7,6 +7,7 @@ import type {FullCall} from "../../../interfaces/Call.ts";
 import router from "../../../router";
 import CallEntry from "./CallEntry.vue";
 import Navigation from "../../base/pagination/Navigation.vue";
+import {t} from "../../../i18n";
 
 const route = useRoute()
 const page = ref<number>(Number(route.query.page) || 1)
@@ -47,10 +48,10 @@ onMounted(load)
 
   <div class="flex justify-evenly">
     <div class="text-2xl">
-      Alarme
+      {{ t('calls.title') }}
     </div>
     <div class="flex justify-end">
-      <div class="mr-2 content-center">Einträge pro Seite:</div>
+      <div class="mr-2 content-center">{{ t('common.entriesPerPage') }}</div>
       <select v-model="pageSize">
         <option v-for="i in [5,10,20,50,100]" :value="i">{{ i }}</option>
       </select>
@@ -61,14 +62,14 @@ onMounted(load)
 
   <div class="border-2 rounded-2xl border-accent grid grid-cols-1 gap-2 p-2 mt-2 mb-2">
     <div class="grid grid-cols-5 gap-2 highlight rounded-2xl" @click="load" style="cursor: pointer">
-      <div>Stichwort</div>
-      <div>Start</div>
-      <div>Ende</div>
-      <div>Stärke</div>
-      <div>Meta</div>
+      <div>{{ t('common.subject') }}</div>
+      <div>{{ t('common.start') }}</div>
+      <div>{{ t('common.end') }}</div>
+      <div>{{ t('calls.strength') }}</div>
+      <div>{{ t('calls.meta') }}</div>
     </div>
-    <div v-if="loading" class="text-center p-4">Laden...</div>
-    <div v-else-if="pageContent.length === 0" class="text-center p-4">Keine Eintraege vorhanden.</div>
+    <div v-if="loading" class="text-center p-4">{{ t('common.loading') }}</div>
+    <div v-else-if="pageContent.length === 0" class="text-center p-4">{{ t('calls.empty') }}</div>
     <CallEntry v-else v-for="call in pageContent" :call="call"/>
   </div>
 
