@@ -6,7 +6,7 @@ import SmartSelect from "../base/select/SmartSelect.vue";
 import {addQualification, getQualifications, removeQualification} from "../../api/member.ts";
 import {listQualifications} from "../../api/qualifications.ts";
 import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
-import {ADateTime, parseDate} from "../../scripts/datetime.ts";
+import {ADateTime} from "../../scripts/datetime.ts";
 import SimpleButton from "../base/buttons/SimpleButton.vue";
 import DatePicker from "../base/datetime/DatePicker.vue";
 
@@ -18,6 +18,7 @@ const props = defineProps({
 })
 const member_qualifications = ref<MemberQualification[]>([])
 const qualifications = ref<Qualification[]>([])
+const loading = ref(true)
 
 const selected_qualification = ref<Qualification>({id: -1, name: "loading..."})
 const selected_date = ref<ADateTime>(ADateTime.now().withoutTime())
@@ -28,22 +29,24 @@ function qualificationName(qualification: MemberQualification): String {
 }
 
 async function add() {
-  console.log(selected_date.value)
   let qualification = {
     member_id: props.member.id!,
     qualification_id: selected_qualification.value.id!,
     since: selected_date.value.toUnixTimestamp()
   }
-  console.log(qualification)
   qualification = await addQualification(qualification)
   member_qualifications.value.push(qualification)
 }
 
 async function load() {
-  member_qualifications.value = await getQualifications(props.member)
-  qualifications.value = await listQualifications()
-  selected_qualification.value = qualifications.value[0]!
-  console.log(JSON.stringify(qualifications.value))
+  loading.value = true
+  try {
+    member_qualifications.value = await getQualifications(props.member)
+    qualifications.value = await listQualifications()
+    selected_qualification.value = qualifications.value[0]!
+  } finally {
+    loading.value = false
+  }
 }
 
 async function remove(qualification :MemberQualification){
@@ -57,6 +60,7 @@ onMounted(load)
 <template>
   <div>
     <div>Qualifications</div>
+    <div v-if="loading" class="p-2">Laden...</div>
     <div v-for="qualification in member_qualifications" class="flex gap-2">
       {{ qualificationName(qualification) }} seit {{ qualification.since }}
       <SimpleButton @click="remove(qualification)">🗑️</SimpleButton>
@@ -64,9 +68,9 @@ onMounted(load)
 
     <div v-if="qualifications.length > 0" class="flex gap-2">
       <SmartSelect class="grow"
-                   :v-model="selected_qualification"
-                   :key_mapper="(v) => v.id!"
-                   :value_mapper="(v) => v.name!"
+                   v-model="selected_qualification"
+                   :key-mapper="(v) => v.id!"
+                   :value-mapper="(v) => v.name"
                    :options="qualifications"
                    strict/>
       <DatePicker v-model="selected_date"/>

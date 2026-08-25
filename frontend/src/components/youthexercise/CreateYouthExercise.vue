@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import type {Member} from "../../interfaces/Member.ts";
 import {ADateTime} from "../../scripts/datetime.ts";
 import ButtonMultiSelect from "../base/select/ButtonMultiSelect.vue";
@@ -8,6 +8,7 @@ import DatePicker from "../base/datetime/DatePicker.vue";
 import TextInput from "../base/input/TextInput.vue";
 import NumberInput from "../base/input/NumberInput.vue";
 import {addYouthExerciseMembers, createYouthExercise} from "../../api/youthExercises.ts";
+import {emitSuccess} from "../../events/bus.ts";
 
 const members = ref<Member[]>([])
 const selectedMembers = ref<Member[]>([])
@@ -16,28 +17,38 @@ const date = ref<ADateTime>(ADateTime.now())
 const hours = ref<number>(3)
 const minutes = ref<number>(0)
 const participants = ref<number>(0)
+const submitting = ref(false)
+
+const canSubmit = computed(() => subject.value.trim().length > 0 && selectedMembers.value.length > 0 && !submitting.value)
 
 onMounted(async () => {
   members.value = await listMembers(true, date.value.toUnixTimestamp())
 })
 
 async function submit() {
-  let exercise_date = date.value.toUnixTimestamp()
-  let exercise = await createYouthExercise({
-    subject: subject.value,
-    exercise_date: exercise_date,
-    duration: minutes.value + hours.value * 60,
-    participants: participants.value
-  })
-  await addYouthExerciseMembers(exercise, selectedMembers.value.map(e => e.id!))
-  selectedMembers.value = []
-  subject.value = ''
-  hours.value = 3
-  minutes.value = 0
-  participants.value = 0
+  if (!canSubmit.value) return
+  submitting.value = true
+  try {
+    let exercise_date = date.value.toUnixTimestamp()
+    let exercise = await createYouthExercise({
+      subject: subject.value,
+      exercise_date: exercise_date,
+      duration: minutes.value + hours.value * 60,
+      participants: participants.value
+    })
+    await addYouthExerciseMembers(exercise, selectedMembers.value.map(e => e.id!))
+    emitSuccess('Jugenduebung erfolgreich erstellt.')
+    selectedMembers.value = []
+    subject.value = ''
+    hours.value = 3
+    minutes.value = 0
+    participants.value = 0
+  } finally {
+    submitting.value = false
+  }
 }
 
-watch(() => date.value.toUnixTimestamp(), async (_, newDate) => {
+watch(() => date.value.toUnixTimestamp(), async (newDate) => {
   members.value = await listMembers(true, newDate)
 });
 </script>
@@ -49,7 +60,7 @@ watch(() => date.value.toUnixTimestamp(), async (_, newDate) => {
     <div class="flex gap-2">
       <div>
         Datum
-        <DatePicker :model-value="date"/>
+        <DatePicker v-model="date"/>
       </div>
       <div>
         Stunden
@@ -66,11 +77,11 @@ watch(() => date.value.toUnixTimestamp(), async (_, newDate) => {
     </div>
     <div v-if="subject">
       Members
-      <ButtonMultiSelect v-model="selectedMembers" :options="members" :value_mapper="(e:Member) => e.name"
-                         :key_mapper="(e:Member) => e.id" :show_empty="false"/>
+      <ButtonMultiSelect v-model="selectedMembers" :options="members" :value-mapper="(e:Member) => e.name"
+                         :key-mapper="(e:Member) => e.id"/>
     </div>
 
-    <button @click="submit" class="bg-green-500 text-white p-2">Create</button>
+    <button @click="submit" :disabled="!canSubmit" class="bg-green-500 text-white p-2 disabled:opacity-50 disabled:cursor-not-allowed">Create</button>
   </div>
 
 

@@ -14,71 +14,56 @@ const props = defineProps({
   }
 })
 
-const original = ref<MultiSelectItem>()
-
 const removed = ref(false)
 const renaming = ref(false)
+const editLabel = ref('')
 
-function toggleRename() {
-  if (!renaming.value) {
-    original.value = Object.assign({}, props.subject)
-  }
-  renaming.value = !renaming.value
+function startRename() {
+  editLabel.value = props.subject.label
+  renaming.value = true
 }
 
 function cancelRename() {
-  props.subject!.label = original.value!.label
-  toggleRename()
+  renaming.value = false
 }
 
 async function rename() {
-  await updateSubject(props.subject!.value! as number, {
-    id: props.subject!.value! as number,
-    name: props.subject?.label,
+  await updateSubject(props.subject.value as number, {
+    id: props.subject.value as number,
+    name: editLabel.value,
     group: props.group
   })
-  toggleRename()
+  props.subject.label = editLabel.value
+  renaming.value = false
 }
 
 async function remove() {
   removed.value = true
-  await deleteSubject(props.subject?.value! as number)
+  await deleteSubject(props.subject.value as number)
 }
 
-function confirm(event: KeyboardEvent) {
-  console.log(event.key)
-  if (event.key === "Enter") {
-    rename()
-  }
-  if (event.key === "Escape") {
-    cancelRename()
-  }
+function handleKeydown(event: KeyboardEvent) {
+  if (event.key === "Enter") rename()
+  if (event.key === "Escape") cancelRename()
 }
-
 </script>
 
 <template>
-
-  <div v-if="removed" class="bg-red-500">
+  <div v-if="removed" class="bg-red-500 px-2 py-1 rounded">
     {{ subject.label }}
   </div>
-  <div v-else-if="renaming" class="flex gap-2 bg-yellow-500">
-    <input class="grow" type="text" v-model="subject.label" @keydown="confirm"/>
+  <div v-else-if="renaming" class="flex gap-2 bg-yellow-500 px-2 py-1 rounded">
+    <input class="grow bg-transparent" type="text" v-model="editLabel" @keydown="handleKeydown"/>
     <div class="flex gap-2">
-      <div @click="rename" style="cursor: pointer">✔️</div>
-      <div @click="cancelRename" style="cursor: pointer">❌</div>
+      <div @click="rename" class="cursor-pointer">✔️</div>
+      <div @click="cancelRename" class="cursor-pointer">❌</div>
     </div>
   </div>
-  <div v-else class="flex gap-2 justify-center">
+  <div v-else class="flex gap-2 justify-center px-2 py-1">
     <div class="grow">{{ subject.label }}</div>
     <div class="flex gap-2">
-      <div @click="remove" style="cursor: pointer" class="justify-items-end">🗑️</div>
-      <div @click="toggleRename" style="cursor: pointer" class="justify-items-end">✏️</div>
+      <div @click="remove" class="cursor-pointer">🗑️</div>
+      <div @click="startRename" class="cursor-pointer">✏️</div>
     </div>
   </div>
-
 </template>
-
-<style scoped>
-
-</style>

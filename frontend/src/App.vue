@@ -1,17 +1,27 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import ErrorPopup from './components/base/ErrorPopup.vue'
+import SuccessPopup from './components/base/SuccessPopup.vue'
+import {auth, clearAuth, isAdmin, isAuthenticated} from './auth'
+import router from './router'
+
+function logout() {
+  clearAuth()
+  router.push('/login')
+}
 </script>
 
 <template>
   <div class="page">
-    <header class="header">
+    <header v-if="isAuthenticated()" class="header">
       <div class="header-inner">
         <nav class="nav">
           <RouterLink to="/calls">Calls</RouterLink>
-          <RouterLink to="/exercise">Exercise</RouterLink>
-          <RouterLink to="/youth">Youth</RouterLink>
-          <RouterLink to="/members">Members</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/exercise">Exercise</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/youth">Youth</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/members">Members</RouterLink>
+          <RouterLink to="/statistics">Statistics</RouterLink>
+          <button class="logout-btn" @click="logout">{{ auth.username }} ⏻</button>
         </nav>
       </div>
     </header>
@@ -23,6 +33,7 @@ import ErrorPopup from './components/base/ErrorPopup.vue'
     </div>
 
     <ErrorPopup />
+    <SuccessPopup />
 
     <footer class="footer">
       <div class="footer-inner">
@@ -66,8 +77,8 @@ import ErrorPopup from './components/base/ErrorPopup.vue'
 }
 
 /* Navigation buttons with orange accents */
-.nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; width: 100%; }
-.nav a { display: block; text-align: center; padding: 0.5rem 0.75rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; background: rgba(255,255,255,0.03); color: inherit; text-decoration: none; transition: background-color 0.2s, border-color 0.2s, transform 0.05s; }
+.nav { display: flex; gap: 0.5rem; width: 100%; }
+.nav a, .nav .logout-btn { flex: 1; display: block; text-align: center; padding: 0.5rem 0.75rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; background: rgba(255,255,255,0.03); color: inherit; text-decoration: none; transition: background-color 0.2s, border-color 0.2s, transform 0.05s; font-size: inherit; cursor: pointer; }
 .nav a:hover { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.6); }
 .nav a:active { transform: translateY(1px); }
 .nav a:focus-visible { outline: 3px solid rgba(249,115,22,0.6); outline-offset: 2px; }

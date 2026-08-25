@@ -31,6 +31,14 @@ export type ErrorEventPayload = {
   details?: any
 }
 
+export type SuccessEventPayload = {
+  message: string
+}
+
+export function emitSuccess(message: string) {
+  bus.emit<SuccessEventPayload>('success', { message })
+}
+
 // Normalize various error shapes (AxiosError / Fetch / generic Error / string)
 export function emitError(err: unknown, extra?: Partial<ErrorEventPayload>) {
   let payload: ErrorEventPayload = { message: 'An unexpected error occurred.' }

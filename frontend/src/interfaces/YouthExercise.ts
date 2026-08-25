@@ -9,5 +9,5 @@ export interface YouthExercise {
 }
 
 export interface FullYouthExercise extends YouthExercise {
-    instructors: SimpleMember
+    instructors: SimpleMember[]
 }

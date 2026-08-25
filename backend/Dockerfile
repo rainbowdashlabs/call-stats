@@ -1,26 +1,10 @@
-FROM python:3.14-trixie
-LABEL authors="nora"
+FROM python:3.14-slim
 
-# User Home dir
 WORKDIR /root
 
-USER root
+RUN pip install --no-cache-dir pipenv
 
-# Installation preparations
-RUN pip install pipenv
+COPY Pipfile Pipfile.lock ./
+RUN pipenv sync
 
-# Copy pipfiles and local dependencies
-COPY Pipfile.lock Pipfile  ./
-
-# Sync dependencies to env
-RUN python -m pipenv sync
-
-# COPY application
-COPY src/ ./src
-COPY docker/docker_entrypoint.sh docker_entrypoint.sh
-
-RUN git config --global --add safe.directory '*'
-
-ENTRYPOINT ["bash", "docker_entrypoint.sh"]
-
-HEALTHCHECK --start-period=30s CMD pgrep -f python || exit 1
+EXPOSE 8000

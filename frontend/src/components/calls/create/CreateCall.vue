@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref} from "vue";
 import type {Subject} from "../../../interfaces/Subject.ts";
 import {listSubjects} from "../../../api/subjects.ts";
 import {listMembers} from "../../../api/members.ts";
 import type {Member} from "../../../interfaces/Member.ts";
 import SmartMultiSelect from "../../base/select/SmartMultiSelect.vue";
 import {createCall, listAbortReasons} from "../../../api/calls.ts";
+import {emitSuccess} from "../../../events/bus.ts";
 import {ADateTime} from "../../../scripts/datetime.ts";
 import DateTimePicker from "../../base/datetime/DateTimePicker.vue";
 import TimePicker from "../../base/datetime/TimePicker.vue";
@@ -22,6 +23,9 @@ const note = ref<string | null>(null)
 const additional = ref<number>(0)
 const start = ref<ADateTime>(ADateTime.now())
 const end = ref<ADateTime>(ADateTime.now())
+const submitting = ref(false)
+
+const canSubmit = computed(() => chosenSubjects.value.length > 0 && selectedMembers.value.length > 0 && !submitting.value)
 
 onMounted(async () => {
   subjects.value = await listSubjects(false) as Subject[]
@@ -31,31 +35,33 @@ onMounted(async () => {
 
 
 async function submit() {
+  if (!canSubmit.value) return
+  submitting.value = true
+  try {
+    end.value = end.value.applyDate(start.value)
+    if (start.value.toUnixTimestamp() > end.value.toUnixTimestamp()) {
+      end.value = end.value.nextDay()
+    }
+    let call = {
+      subjects: chosenSubjects.value.map(e => e.id!),
+      start: start.value.toUnixTimestamp(),
+      end: end.value.toUnixTimestamp(),
+      additional: additional.value,
+      members: selectedMembers.value.map(e => e.id!),
+      note: note.value,
+      abort_reason: abort_reason.value
+    }
 
-  end.value = end.value.applyDate(start.value)
-  if (start.value.toUnixTimestamp() > end.value.toUnixTimestamp()) {
-    end.value = end.value.nextDay()
+    await createCall(call)
+    emitSuccess('Alarm erfolgreich erstellt.')
+    chosenSubjects.value = []
+    selectedMembers.value = []
+    abort_reason.value = null
+    note.value = null
+    additional.value = 0
+  } finally {
+    submitting.value = false
   }
-  console.log("start: " + start.value)
-  console.log("end: " + end.value)
-
-  let call = {
-    subjects: chosenSubjects.value.map(e => e.id!),
-    start: start.value.toUnixTimestamp(),
-    end: end.value.toUnixTimestamp(),
-    additional: additional.value,
-    members: selectedMembers.value.map(e => e.id!),
-    note: note.value,
-    abort_reason: abort_reason.value
-  }
-
-  console.log(JSON.stringify(call))
-  await createCall(call)
-  chosenSubjects.value = []
-  selectedMembers.value = []
-  abort_reason.value = null
-  note.value = null
-  additional.value = 0
 }
 </script>
 
@@ -64,8 +70,8 @@ async function submit() {
     <div class="text-2xl">Alarm Anlegen</div>
     <div>
       Stichwort
-      <SmartMultiSelect v-model="chosenSubjects" :options="subjects" :value_mapper="(e:Subject) => e.name"
-                        :key_mapper="(e: Subject) => e.id!" :show_empty="false"/>
+      <SmartMultiSelect v-model="chosenSubjects" :options="subjects" :value-mapper="(e:Subject) => e.name"
+                        :key-mapper="(e: Subject) => e.id!" :show-empty="false"/>
     </div>
 
     <div class="flex justify-center gap-5">
@@ -86,13 +92,13 @@ async function submit() {
 
     <div>
       Mitglieder
-      <SmartMultiSelect v-model="selectedMembers" :options="members" :value_mapper="(e:Member) => e.name"
-                        :key_mapper="(e:Member) => e.id" :show_empty="false"/>
+      <SmartMultiSelect v-model="selectedMembers" :options="members" :value-mapper="(e:Member) => e.name"
+                        :key-mapper="(e:Member) => e.id" :show-empty="false"/>
     </div>
 
     <div>
       Grund bei Abbruch
-      <SmartSelect :key_mapper="(v) => v" :value_mapper="(k) => k as string" :options="abort_reasons"
+      <SmartSelect :key-mapper="(v) => v" :value-mapper="(k) => k as string" :options="abort_reasons"
                    v-model="abort_reason"/>
     </div>
 
@@ -101,7 +107,7 @@ async function submit() {
       <input v-model="note" type="text" placeholder="note" class="bg-gray-800 text-gray-50 w-full"/>
     </div>
 
-    <button @click="submit" class="bg-green-500 text-white p-2" @keydown.ctrl.enter="submit">Erstellen</button>
+    <button @click="submit" :disabled="!canSubmit" class="bg-green-500 text-white p-2 disabled:opacity-50 disabled:cursor-not-allowed" @keydown.ctrl.enter="submit">Erstellen</button>
   </div>
 </template>
 

@@ -16,22 +16,14 @@ async function edit() {
 </script>
 
 <template>
-  <div class="grid grid-cols-6">
-    <div class="">
-      {{ member.id! }}
+  <div class="grid grid-cols-6 py-1 hover:bg-gray-800 rounded cursor-pointer" @click="edit">
+    <div>{{ member.id }}</div>
+    <div class="col-span-3">{{ member.name }}</div>
+    <div>
+      <span v-if="member.retired">bis {{ new Date((member.retired as number) * 1000).toLocaleDateString() }}</span>
+      <span v-else>Aktiv</span>
     </div>
-    <div class="col-span-3">
-      {{ member.name }}
-    </div>
-    <div class="">
-      <div v-if="member.retired">
-        bis {{ member.retired }}
-      </div>
-      <div v-else>
-        Aktiv
-      </div>
-    </div>
-    <div @click="edit" class="" style="cursor: pointer">✏️</div>
+    <div>✏️</div>
   </div>
 </template>
 

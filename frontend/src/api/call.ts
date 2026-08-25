@@ -9,7 +9,16 @@ export async function getCall(id: number): Promise<FullCall> {
         const {data} = await http.get<FullCall>(`/api/call/${id}`)
         return data
     } catch (e) {
-        emitError(e, {message: 'Failed to load calls.'})
+        emitError(e, {message: 'Failed to load call.'})
+        throw e
+    }
+}
+
+export async function updateCall(call: {id: number, start: number | string, end: number | string, additional: number, note?: string | null, abort_reason?: string | null}): Promise<void> {
+    try {
+        await http.patch('/api/call', call)
+    } catch (e) {
+        emitError(e, {message: 'Failed to update call.'})
         throw e
     }
 }
@@ -18,7 +27,7 @@ export async function removeCall(id: number): Promise<void> {
     try {
         await http.delete<FullCall>(`/api/call/${id}`)
     } catch (e) {
-        emitError(e, {message: 'Failed to load calls.'})
+        emitError(e, {message: 'Failed to delete call.'})
         throw e
     }
 }

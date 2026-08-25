@@ -34,7 +34,7 @@ watch(seconds, (value) => model.value.second = value)
     :
     <NumberPicker :max="59" :min="0" v-model="minute" label="Minute"/>
     <div v-if="props.seconds"> : </div>
-    <NumberPicker v-if="props.seconds" max="0" min="59" v-model="seconds" label="Sekunde"/>
+    <NumberPicker v-if="props.seconds" :max="59" :min="0" v-model="seconds" label="Sekunde"/>
   </div>
 
 </template>

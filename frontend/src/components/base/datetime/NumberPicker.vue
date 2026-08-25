@@ -12,45 +12,46 @@ const props = defineProps({
   max: {
     type: Number,
     required: true
+  },
+  label: {
+    type: String,
+    required: false
   }
 })
 
 const model = defineModel({type: Number, required: true})
+const currentValue = ref<number>(Math.min(props.max, Math.max(props.min, model.value)))
 
+// Sync model → internal value (external changes)
 watch(model, (value) => {
-  console.log(`Model value updated to ${value}`)
-  currentValue.value = value
-  clampAndPropagateToModel(value)
+  const clamped = Math.min(props.max, Math.max(props.min, value))
+  if (currentValue.value !== clamped) {
+    currentValue.value = clamped
+  }
 })
 
-const currentValue = ref<number>(model.value)
-
-function clampAndPropagateToModel(value?: number){
-  if (!value) return
-  if (value > props.max) {
-    currentValue.value = props.max
+// Sync internal value → model
+watch(currentValue, (value) => {
+  const num = Number(value)
+  if (isNaN(num)) return
+  const clamped = Math.min(props.max, Math.max(props.min, num))
+  if (clamped !== currentValue.value) {
+    currentValue.value = clamped
   }
-  if (value < props.min) {
-    currentValue.value = props.min
+  if (model.value !== clamped) {
+    model.value = clamped
   }
-  model.value = currentValue.value!
-}
+})
 
-clampAndPropagateToModel(model.value)
-
-watch(currentValue, clampAndPropagateToModel)
+// Re-clamp when max/min props change
+watch(() => props.max, () => {
+  const clamped = Math.min(props.max, Math.max(props.min, currentValue.value))
+  if (currentValue.value !== clamped) {
+    currentValue.value = clamped
+  }
+})
 
 const emit = defineEmits(["overflowUp", "overflowDown"])
-
-function handleDown() {
-  if (currentValue.value - 1 < props.min) {
-    currentValue.value = props.max
-    emit("overflowDown")
-  } else {
-    currentValue.value -= 1
-  }
-  console.log(currentValue.value)
-}
 
 function handleUp() {
   if (currentValue.value + 1 > props.max) {
@@ -59,9 +60,16 @@ function handleUp() {
   } else {
     currentValue.value += 1
   }
-  console.log(currentValue.value)
 }
 
+function handleDown() {
+  if (currentValue.value - 1 < props.min) {
+    currentValue.value = props.max
+    emit("overflowDown")
+  } else {
+    currentValue.value -= 1
+  }
+}
 </script>
 
 <template>

@@ -4,9 +4,11 @@ import {onMounted, ref} from "vue";
 import type {Member} from "../interfaces/Member.ts";
 import {getMember, updateMember} from "../api/member.ts";
 import MemberQualifications from "../components/member/MemberQualifications.vue";
+import MemberActivity from "../components/member/MemberActivity.vue";
 import SimpleButton from "../components/base/buttons/SimpleButton.vue";
 import {parseDate, todayDate} from "../scripts/datetime.ts";
 import Tooltip from "../components/base/Tooltip.vue";
+import {isAdmin} from "../auth.ts";
 
 const member = ref<Member>()
 
@@ -56,7 +58,7 @@ onMounted(load)
     <div class="flex gap-2 justify-start">
       <div v-if="!edit_name" class="flex gap-2">
         <div>{{ member?.name }}</div>
-        <SimpleButton @click="edit_name = true">✏️</SimpleButton>
+        <SimpleButton v-if="isAdmin()" @click="edit_name = true">✏️</SimpleButton>
       </div>
       <div v-else class="flex gap-2">
         <input type="text" v-model="new_name"/>
@@ -68,9 +70,8 @@ onMounted(load)
     <div class="flex justify-end">Retired:</div>
     <div class="flex justify-start gap-2">
       <div v-if="member?.retired" class="flex gap-2">
-
-        {{ member?.retired }}
-        <Tooltip hoverText="Remove Retirement">
+        {{ new Date(member!.retired as number * 1000).toLocaleDateString() }}
+        <Tooltip v-if="isAdmin()" hoverText="Remove Retirement">
           <SimpleButton @click="removeRetire">🗑️</SimpleButton>
         </Tooltip>
       </div>
@@ -82,14 +83,15 @@ onMounted(load)
         </div>
         <div v-else class="flex gap-2">
           Aktiv
-          <Tooltip hoverText="Retire Member">
+          <Tooltip v-if="isAdmin()" hoverText="Retire Member">
             <SimpleButton @click="edit_retire = true">🚪</SimpleButton>
           </Tooltip>
         </div>
       </div>
     </div>
   </div>
-  <MemberQualifications v-if="member" :member="member"/>
+  <MemberQualifications v-if="member && isAdmin()" :member="member"/>
+  <MemberActivity v-if="member" :member="member"/>
 </template>
 
 <style scoped>

@@ -2,7 +2,6 @@
 import type {PropType} from "vue";
 import type {MultiSelectGroup} from "../../interfaces/Subject.ts";
 import SubjectEntry from "./SubjectEntry.vue";
-import Container from "../base/container/Container.vue";
 
 defineProps({
   group: {

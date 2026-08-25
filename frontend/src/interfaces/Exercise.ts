@@ -8,5 +8,5 @@ export interface Exercise {
 }
 
 export interface FullExercise extends Exercise {
-    members: SimpleMember
+    members: SimpleMember[]
 }

@@ -13,6 +13,7 @@ const page = ref<number>(Number(route.query.page) || 1)
 const pageSize = ref(Number(route.query.pageSize) || 20)
 const pageContent = ref<FullCall[]>([])
 const pages = ref(1)
+const loading = ref(false)
 
 watch(page, async (value, _) => await switchPage(value))
 watch(pageSize, async () => {
@@ -26,10 +27,15 @@ async function switchPage(page: number) {
 }
 
 async function load() {
-  let result = await listCalls(page.value, pageSize.value)
-  pageContent.value = result.entries
-  page.value = result.page
-  pages.value = result.pages
+  loading.value = true
+  try {
+    let result = await listCalls(page.value, pageSize.value)
+    pageContent.value = result.entries
+    page.value = result.page
+    pages.value = result.pages
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(load)
@@ -45,7 +51,7 @@ onMounted(load)
     </div>
     <div class="flex justify-end">
       <div class="mr-2 content-center">Einträge pro Seite:</div>
-      <select v-model="pageSize" @change="load">
+      <select v-model="pageSize">
         <option v-for="i in [5,10,20,50,100]" :value="i">{{ i }}</option>
       </select>
     </div>
@@ -61,7 +67,9 @@ onMounted(load)
       <div>Stärke</div>
       <div>Meta</div>
     </div>
-    <CallEntry v-for="call in pageContent" :call="call"/>
+    <div v-if="loading" class="text-center p-4">Laden...</div>
+    <div v-else-if="pageContent.length === 0" class="text-center p-4">Keine Eintraege vorhanden.</div>
+    <CallEntry v-else v-for="call in pageContent" :call="call"/>
   </div>
 
   <Navigation :pages="pages" v-model="page"/>

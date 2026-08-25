@@ -2,8 +2,7 @@
 import {onMounted, ref} from 'vue'
 import SubjectForm from '../../components/subjects/SubjectForm.vue'
 import type {MultiSelectGroup, Subject} from '../../interfaces/Subject'
-import {createSubject, deleteSubject, listSubjects, updateSubject} from '../../api/subjects'
-import Container from "../../components/base/container/Container.vue";
+import {createSubject, listSubjects} from '../../api/subjects'
 import SubjectList from "../../components/subjects/SubjectList.vue";
 
 const subjects = ref<MultiSelectGroup[]>([])
@@ -25,34 +24,19 @@ async function load() {
 async function handleCreate(subject: Subject) {
   try {
     const created = await createSubject(subject)
+    let found = false
     for (let group of subjects.value) {
       if (group.label == created.group) {
         group.items.push({label: created.name, value: created.id!})
+        found = true
         break
       }
+    }
+    if (!found) {
       subjects.value.push({label: created.group, items: [{label: created.name, value: created.id!}]})
     }
   } catch (e: any) {
     alert(e?.message ?? 'Failed to create subject')
-  }
-}
-
-async function handleRename(id: number, updated: Subject) {
-  try {
-    const saved = await updateSubject(id, updated)
-    subjects.value = subjects.value.map(s => s.id === id ? saved : s)
-  } catch (e: any) {
-    alert(e?.message ?? 'Failed to rename subject')
-  }
-}
-
-async function handleDelete(id: number) {
-  if (!confirm('Delete this subject?')) return
-  try {
-    await deleteSubject(id)
-    subjects.value = subjects.value.filter(s => s.id !== id)
-  } catch (e: any) {
-    alert(e?.message ?? 'Failed to delete subject')
   }
 }
 

@@ -1,145 +1,120 @@
+<script setup lang="ts">
+import {ref, watch} from "vue"
 
-<script setup lang="ts" generic="T">
+const props = defineProps<{
+  options: any[]
+  valueMapper: (item: any) => string
+  keyMapper: (item: any) => any
+  showEmpty?: boolean
+  placeholder?: string
+}>()
 
-import {type PropType, ref} from "vue";
-import {select} from "../../../scripts/selection.ts";
-import StandardButton from "../buttons/StandardButton.vue";
+const model = defineModel<any[]>({default: []})
 
-let props = defineProps({
-  options: {
-    type: Object as PropType<T[]>,
-    required: true
-  },
-  value_mapper: {
-    type: Function as PropType<(item: T) => string>,
-    required: true
-  },
-  key_mapper: {
-    type: Function as PropType<(item: T) => any>,
-    required: true
-  },
-  show_empty: {
-    type: Boolean,
-    default: true
-  }
-})
-
-const model = defineModel({type: Array as () => T[], default: []})
-
-
-const currentMatches = ref<T[]>([])
-if (props.show_empty) {
-  currentMatches.value = props.options
-}
 const term = ref('')
-const cursorItem = ref<T | null>(null)
-const showDropdown = ref(false)
+const matches = ref<any[]>([])
+const cursor = ref(-1)
+const open = ref(false)
 
-function keyDown(e: KeyboardEvent) {
-  if (e.key === 'Enter') {
-    if (cursorItem.value != null) {
-      add(cursorItem.value)
-      clear()
-      update()
-    }
-    let matches = select<T>(props.options, props.value_mapper, term.value)
-    if (matches.length === 1) {
-      add(matches[0]!)
-      clear()
-      update()
-    }
-  }
-  if (e.key === "ArrowDown") {
-    if (cursorItem.value === null && currentMatches.value.length > 0) {
-      cursorItem.value = currentMatches.value[0]! as T
-    } else {
-      let index = currentMatches.value.indexOf(cursorItem.value)
-      if (index + 1 < currentMatches.value.length) {
-        cursorItem.value = currentMatches.value[index + 1]! as T
-      }
-    }
-  }
+watch(() => props.options, () => { if (open.value) filter() })
 
-  if (e.key === "ArrowUp") {
-    if (cursorItem.value !== null) {
-      let index = currentMatches.value.indexOf(cursorItem.value)
-      if (index > 0) {
-        cursorItem.value = currentMatches.value[index - 1]! as T
-      }
-    }
-  }
+function available(): any[] {
+  return props.options.filter(o => !model.value.includes(o))
 }
 
-function clear() {
+function filter() {
+  const search = term.value.trim().toLowerCase()
+  const pool = available()
+  if (!search && props.showEmpty !== false) {
+    matches.value = pool
+  } else if (!search) {
+    matches.value = []
+  } else {
+    matches.value = pool.filter(item =>
+        props.valueMapper(item).toLowerCase().includes(search)
+    )
+  }
+  cursor.value = -1
+}
+
+function add(item: any) {
+  if (!model.value.includes(item)) {
+    model.value = [...model.value, item]
+  }
   term.value = ''
-  cursorItem.value = null
+  filter()
 }
 
-function add(item: T) {
-  if (model.value.indexOf(item) == -1) {
-    model.value.push(item)
+function remove(item: any) {
+  model.value = model.value.filter(v => v !== item)
+  filter()
+}
+
+function onKeyDown(e: KeyboardEvent) {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    cursor.value = Math.min(cursor.value + 1, matches.value.length - 1)
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    cursor.value = Math.max(cursor.value - 1, 0)
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    if (cursor.value >= 0 && cursor.value < matches.value.length) {
+      add(matches.value[cursor.value])
+    } else if (matches.value.length === 1) {
+      add(matches.value[0])
+    }
+  } else if (e.key === 'Escape') {
+    open.value = false
+    cursor.value = -1
+  } else if (e.key === 'Backspace' && !term.value && model.value.length > 0) {
+    remove(model.value[model.value.length - 1])
   }
-}
-
-function remove(item: T) {
-  let index = model.value.indexOf(item)
-  if (index != -1) {
-    model.value.splice(index, 1)
-  }
-}
-
-function update() {
-  currentMatches.value = select<T>(props.options, props.value_mapper, term.value, props.show_empty)
-  currentMatches.value = currentMatches.value.filter(v => model.value.indexOf(v as T) === -1)
-  showDropdown.value = true
 }
 
 function onFocus() {
-  showDropdown.value = true
-  update()
+  open.value = true
+  filter()
 }
 
 function onBlur() {
-  // Delay to allow click events to register
-  setTimeout(() => {
-    showDropdown.value = false
-  }, 200)
+  setTimeout(() => { open.value = false }, 150)
 }
-
 </script>
 
 <template>
   <div class="flex flex-col gap-2">
-    <div class="flex gap-2 flex-wrap justify-center">
-      <StandardButton class="bg-gray-200" v-for="item in model" :key="props.key_mapper(item)" @click="_ => remove(item)">
-        {{ props.value_mapper(item) }}
-      </StandardButton>
+    <!-- Selected items as chips -->
+    <div v-if="model.length > 0" class="flex gap-1 flex-wrap">
+      <span v-for="item in model" :key="keyMapper(item)"
+            class="inline-flex items-center gap-1 bg-gray-700 text-gray-100 px-2 py-1 rounded text-sm">
+        {{ valueMapper(item) }}
+        <button type="button" @click="remove(item)" class="text-gray-400 hover:text-white">&times;</button>
+      </span>
     </div>
 
+    <!-- Search input + dropdown -->
     <div class="relative">
-      <input type="text" v-model="term" @input="update" @keydown="keyDown" @focus="onFocus" @blur="onBlur" placeholder="search"
-             class="bg-gray-800 text-gray-50 w-full"/>
-
-      <div v-if="showDropdown && currentMatches.length > 0"
+      <input
+          type="text"
+          v-model="term"
+          @input="filter"
+          @keydown="onKeyDown"
+          @focus="onFocus"
+          @blur="onBlur"
+          :placeholder="placeholder ?? 'Search...'"
+          class="bg-gray-800 text-gray-50 w-full px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+      />
+      <div v-if="open && matches.length > 0"
            class="absolute z-50 w-full mt-1 max-h-64 overflow-y-auto bg-gray-800 border border-gray-600 rounded shadow-lg">
-        <div v-for="item in currentMatches" @click="() =>// @ts-ignore
-         add(item)" :key="// @ts-ignore
-         props.key_mapper(item)"
-             class="cursor-pointer hover:bg-gray-700">
-          <div v-if="cursorItem === item" class="bg-gray-600 text-gray-50 px-3 py-2">
-            {{ // @ts-ignore
-              props.value_mapper(item) }}
-          </div>
-          <div v-else class="bg-gray-800 text-gray-50 px-3 py-2">
-            {{ // @ts-ignore
-              props.value_mapper(item) }}
-          </div>
+        <div v-for="(item, i) in matches"
+             :key="keyMapper(item)"
+             @mousedown.prevent="add(item)"
+             class="px-3 py-2 cursor-pointer"
+             :class="i === cursor ? 'bg-gray-600' : 'hover:bg-gray-700'">
+          {{ valueMapper(item) }}
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-
-</style>
