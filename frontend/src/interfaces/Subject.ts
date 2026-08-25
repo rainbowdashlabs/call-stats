@@ -1,4 +1,5 @@
 export interface Subject extends SimpleSubject {
+    usage?: number
 }
 
 export interface MultiSelectItem {

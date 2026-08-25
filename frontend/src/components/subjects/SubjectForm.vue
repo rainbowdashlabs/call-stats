@@ -4,6 +4,7 @@ import {onMounted, ref} from "vue";
 import {listSubjects} from "../../api/subjects.ts";
 import type {MultiSelectGroup} from "../../interfaces/Subject.ts";
 import TextInput from "../base/input/TextInput.vue";
+import {t} from "../../i18n";
 
 const emit = defineEmits(['create'])
 
@@ -29,8 +30,8 @@ function create() {
 <template>
   <div class="grid grid-cols-3 gap-2">
     <SmartSelect :options="groups" :value-mapper="(v) => v" :key-mapper="(k) => k"
-                 v-model="group" placeholder="Gruppe"/>
-    <TextInput v-model="name"/>
-    <button @click="create">Create</button>
+                 :generator="(v:string) => v" v-model="group" :placeholder="t('subjects.group')"/>
+    <TextInput v-model="name" :placeholder="t('subjects.name')"/>
+    <button @click="create">{{ t('common.create') }}</button>
   </div>
 </template>

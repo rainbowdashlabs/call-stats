@@ -36,6 +36,14 @@ class Member(SQLModel, table=True):
         self.name = member.name
         self.retired = member.retired
 
+class MemberUsage(BaseModel):
+    """A member together with how often they attended recent calls, for ranking in pickers."""
+    id: int
+    name: str
+    retired: Optional[date] = None
+    usage: int
+
+
 class SimpleMember(BaseModel):
     id: int
     name: str

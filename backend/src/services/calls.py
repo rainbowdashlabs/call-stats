@@ -20,7 +20,8 @@ FullCall.model_rebuild(_types_namespace={"SimpleMember": SimpleMember})
 
 @router.post("")
 def create(*, session: Session = Depends(get_session), call: CreateCall) -> Call:
-    created = Call(start=call.start, end=call.end, abort_reason=call.abort_reason, note=call.note)
+    created = Call(start=call.start, end=call.end, additional=call.additional,
+                   abort_reason=call.abort_reason, note=call.note)
     session.add(created)
     session.commit()
     session.refresh(created)

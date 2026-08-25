@@ -3,6 +3,7 @@
 import {type PropType, ref, watch} from "vue";
 import NumberPicker from "./NumberPicker.vue";
 import type {ADateTime} from "../../../scripts/datetime.ts";
+import {t} from "../../../i18n";
 
 const props = defineProps({
   seconds: {
@@ -22,19 +23,35 @@ const hour = ref<number>(model.value.hour)
 const minute = ref<number>(model.value.minute)
 const seconds = ref<number>(model.value.second)
 
+const hourPicker = ref<InstanceType<typeof NumberPicker> | null>(null)
+const minutePicker = ref<InstanceType<typeof NumberPicker> | null>(null)
+const secondPicker = ref<InstanceType<typeof NumberPicker> | null>(null)
+
 watch(hour, (value) => model.value.hour = value)
 watch(minute, (value) => model.value.minute = value)
 watch(seconds, (value) => model.value.second = value)
 
+watch(model, (value) => {
+  hour.value = value.hour
+  minute.value = value.minute
+  seconds.value = value.second
+})
+
+defineExpose({
+  focus: () => hourPicker.value?.focus()
+})
 </script>
 
 <template>
   <div class="flex bg-bgmd items-center p-2 rounded-md">
-    <NumberPicker :max="24" :min="0" v-model="hour" label="Stunde"/>
+    <NumberPicker ref="hourPicker" :max="23" :min="0" v-model="hour" :label="t('common.hour')"
+                  @advance="minutePicker?.focus()"/>
     :
-    <NumberPicker :max="59" :min="0" v-model="minute" label="Minute"/>
+    <NumberPicker ref="minutePicker" :max="59" :min="0" v-model="minute" :label="t('common.minute')"
+                  @advance="props.seconds ? secondPicker?.focus() : undefined"/>
     <div v-if="props.seconds"> : </div>
-    <NumberPicker v-if="props.seconds" :max="59" :min="0" v-model="seconds" label="Sekunde"/>
+    <NumberPicker v-if="props.seconds" ref="secondPicker" :max="59" :min="0" v-model="seconds"
+                  :label="t('common.second')"/>
   </div>
 
 </template>

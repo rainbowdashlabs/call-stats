@@ -1,14 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import Depends, APIRouter
+from sqlalchemy import func
 from sqlmodel import Session, select, or_
 
 from data import get_session
-from entities.member import Member
+from entities.call import Call, CallMember
+from entities.member import Member, MemberUsage
 from services.extra.errors import ExistsError, NotFoundError
 
 router = APIRouter(prefix="/members",
                    tags=["members"])
+
+USAGE_WINDOW_DAYS = 365
 
 
 @router.post("")
@@ -23,8 +27,17 @@ def create(*, session: Session = Depends(get_session), member: Member) -> Member
     return member
 
 
+def _usage_by_member(session: Session) -> dict[int, int]:
+    cutoff = datetime.now() - timedelta(days=USAGE_WINDOW_DAYS)
+    stmt = (select(CallMember.member_id, func.count())
+            .join(Call, Call.id == CallMember.call_id)
+            .where(Call.start >= cutoff)
+            .group_by(CallMember.member_id))
+    return {member_id: count for member_id, count in session.exec(stmt)}
+
+
 @router.get("")
-def get_all(*, session: Session = Depends(get_session), filter_active: bool = False, active_after: datetime = None) -> list[Member]:
+def get_all(*, session: Session = Depends(get_session), filter_active: bool = False, active_after: datetime = None) -> list[MemberUsage]:
     if active_after and filter_active:
         stmt = select(Member).where(or_(Member.retired == None, Member.retired > active_after))
     elif filter_active:
@@ -32,7 +45,9 @@ def get_all(*, session: Session = Depends(get_session), filter_active: bool = Fa
     else:
         stmt = select(Member)
     result = session.exec(stmt).all()
-    return sorted(list(result), key=lambda x: x.name)
+    usage = _usage_by_member(session)
+    return sorted([MemberUsage(id=m.id, name=m.name, retired=m.retired, usage=usage.get(m.id, 0))
+                   for m in result], key=lambda x: x.name)
 
 
 @router.get("/search")

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {type PropType} from "vue";
+import {type PropType, ref} from "vue";
 import DatePicker from "./DatePicker.vue";
 import TimePicker from "./TimePicker.vue";
 import type {ADateTime} from "../../../scripts/datetime.ts";
@@ -14,11 +14,17 @@ const props = defineProps({
     default: false
   }
 })
+
+const datePicker = ref<InstanceType<typeof DatePicker> | null>(null)
+
+defineExpose({
+  focus: () => datePicker.value?.focus()
+})
 </script>
 
 <template>
   <div class="flex gap-2 bg-bgmd rounded-md">
-    <DatePicker v-model="model"/>
+    <DatePicker ref="datePicker" v-model="model"/>
     <TimePicker v-model="model" :seconds="props.seconds"/>
   </div>
 </template>

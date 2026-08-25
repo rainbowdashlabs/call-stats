@@ -14,6 +14,10 @@ const month = ref<number>(model.value.month ?? getCurrentMonth())
 const year = ref<number>(model.value.year ?? getCurrentYear())
 const maxDays = ref<number>(getDaysInMonth(year.value, month.value))
 
+const dayPicker = ref<InstanceType<typeof NumberPicker> | null>(null)
+const monthPicker = ref<InstanceType<typeof NumberPicker> | null>(null)
+const yearPicker = ref<InstanceType<typeof NumberPicker> | null>(null)
+
 let updating = false
 
 function sync() {
@@ -35,6 +39,15 @@ function recalcMaxDays() {
 watch(day, sync)
 watch(month, () => { recalcMaxDays(); sync() })
 watch(year, () => { recalcMaxDays(); sync() })
+
+watch(model, (value) => {
+  updating = true
+  day.value = value.day
+  month.value = value.month
+  year.value = value.year
+  recalcMaxDays()
+  updating = false
+})
 
 function dayOverflowUp() {
   if (month.value >= 12) {
@@ -61,14 +74,20 @@ function monthOverflowUp() {
 function monthOverflowDown() {
   year.value -= 1
 }
+
+defineExpose({
+  focus: () => dayPicker.value?.focus()
+})
 </script>
 
 <template>
   <div class="flex bg-bgmd items-center p-2 rounded-md">
-    <NumberPicker :max="maxDays" :min="1" v-model="day" @overflowUp="dayOverflowUp" @overflowDown="dayOverflowDown"/>
+    <NumberPicker ref="dayPicker" :max="maxDays" :min="1" v-model="day" @overflowUp="dayOverflowUp"
+                  @overflowDown="dayOverflowDown" @advance="monthPicker?.focus()"/>
     .
-    <NumberPicker :max="12" :min="1" v-model="month" @overflowUp="monthOverflowUp" @overflowDown="monthOverflowDown"/>
+    <NumberPicker ref="monthPicker" :max="12" :min="1" v-model="month" @overflowUp="monthOverflowUp"
+                  @overflowDown="monthOverflowDown" @advance="yearPicker?.focus()"/>
     .
-    <NumberPicker :max="2100" :min="1900" v-model="year"/>
+    <NumberPicker ref="yearPicker" :max="2100" :min="1900" v-model="year"/>
   </div>
 </template>

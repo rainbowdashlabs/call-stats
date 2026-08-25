@@ -30,7 +30,7 @@ class Subject(SQLModel, table=True):
 
 class Call(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    subjects: list[CallSubject] = Relationship(back_populates="call")
+    subjects: list[CallSubject] = Relationship(back_populates="call", cascade_delete=True)
     start: datetime = Field(default=None, index=True)
     end: datetime = Field(default=None, index=True)
     additional: int = Field(default=0)
@@ -43,6 +43,7 @@ class CreateCall(BaseModel):
     subjects: list[int]
     start: datetime
     end: datetime
+    additional: int = 0
     abort_reason: Optional[str] = None
     note: Optional[str] = None
     members: list[int]
@@ -61,11 +62,20 @@ class SimpleSubject(BaseModel):
                              group=subject.group)
 
 
+class SubjectUsage(BaseModel):
+    """A subject together with how often it was used on recent calls, for ranking in pickers."""
+    id: int
+    name: str
+    group: str
+    usage: int
+
+
 class FullCall(BaseModel):
     id: int
     subjects: list[SimpleSubject]
     start: datetime
     end: datetime
+    additional: int
     abort_reason: Optional[str]
     note: Optional[str]
     members: list["SimpleMember"]
@@ -78,5 +88,6 @@ class FullCall(BaseModel):
                         members=[SimpleMember.convert(e) for e in call.members],
                         start=call.start,
                         end=call.end,
+                        additional=call.additional,
                         abort_reason=call.abort_reason,
                         note=call.note)
