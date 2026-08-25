@@ -40,6 +40,11 @@ function filter() {
   cursor.value = 0
 }
 
+function onInput() {
+  open.value = true
+  filter()
+}
+
 function add(item: any) {
   if (!model.value.includes(item)) {
     model.value = [...model.value, item]
@@ -129,7 +134,7 @@ defineExpose({
           ref="input"
           type="text"
           v-model="term"
-          @input="filter"
+          @input="onInput"
           @keydown="onKeyDown"
           @focus="onFocus"
           @blur="onBlur"
