@@ -18,8 +18,13 @@ export function formatDateTime(date: string): string {
     return new Date(date).toLocaleString('de-DE')
 }
 
-export function formatDate(timestamp: number): string {
-    return new Date(timestamp * 1000).toLocaleDateString('de-DE')
+/**
+ * Formats a date that the API may deliver either way: dates are sent as unix timestamps but
+ * come back as ISO strings, because the backend's `EpochDate` only converts on the way in.
+ */
+export function formatDate(value: number | string): string {
+    const date = typeof value === 'number' ? new Date(value * 1000) : new Date(value)
+    return date.toLocaleDateString('de-DE')
 }
 
 export function getDaysInMonth(year: number, month: number): number {

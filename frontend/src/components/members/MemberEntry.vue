@@ -22,7 +22,7 @@ async function edit() {
     <div>{{ member.id }}</div>
     <div class="col-span-3">{{ member.name }}</div>
     <div>
-      <span v-if="member.retired">{{ t('members.until', { date: formatDate(member.retired as number) }) }}</span>
+      <span v-if="member.retired">{{ t('members.until', { date: formatDate(member.retired!) }) }}</span>
       <span v-else>{{ t('members.active') }}</span>
     </div>
     <div>✏️</div>
