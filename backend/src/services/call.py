@@ -25,7 +25,7 @@ def add_members(*, session: Session = Depends(get_session), call_id: int, member
     session.commit()
 
 
-@router.patch("/member/{call_id}")
+@router.delete("/member/{call_id}")
 def remove_members(*, session: Session = Depends(get_session), call_id: int, member_ids: list[int]):
     call = _get_call_by_id(session=session, id=call_id)
     for member_ids in member_ids:
