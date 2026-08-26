@@ -15,6 +15,7 @@ from services.youth_exercise import router as youth_exercise_router
 from services.youth_exercises import router as youth_exercises_router
 from services.statistics import router as statistics_router
 from services.auth import router as auth_router, get_current_user
+from services.config import router as config_router
 
 router = APIRouter()
 
@@ -22,6 +23,7 @@ _api_router = APIRouter(prefix="/api")
 
 # Auth endpoint (no auth required)
 _api_router.include_router(auth_router)
+_api_router.include_router(config_router)
 
 # All other endpoints require authentication (any role)
 _protected_router = APIRouter(dependencies=[Depends(get_current_user)])
