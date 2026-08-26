@@ -57,13 +57,13 @@ const routes: RouteRecordRaw[] = [
     path: '/statistics',
     name: 'Statistics',
     component: () => import('../views/StatisticsView.vue'),
-    meta: { titleKey: 'routes.statistics' }
+    meta: { titleKey: 'routes.statistics', wide: true }
   },
   {
     path: '/statistics/present',
     name: 'Presentation',
     component: () => import('../views/PresentationView.vue'),
-    meta: { titleKey: 'routes.presentation' }
+    meta: { titleKey: 'routes.presentation', wide: true }
   },
   {
     path: '/theme',

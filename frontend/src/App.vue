@@ -1,10 +1,18 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import {computed} from 'vue'
+import {RouterLink, RouterView, useRoute} from 'vue-router'
 import ErrorPopup from './components/base/ErrorPopup.vue'
 import SuccessPopup from './components/base/SuccessPopup.vue'
 import {auth, clearAuth, isAdmin, isAuthenticated} from './auth'
 import router from './router'
 import {t} from './i18n'
+import {brigadeName} from './api/config'
+import {activeTheme, toggleTheme} from './theme'
+
+const route = useRoute()
+
+/** Statistics and the deck ask for the full width; everything else reads better in a column. */
+const contentWidth = computed(() => route.meta.wide ? 'max-w-[1560px]' : 'max-w-[1180px]')
 
 function logout() {
   clearAuth()
@@ -13,92 +21,86 @@ function logout() {
 </script>
 
 <template>
-  <div class="page">
-    <header v-if="isAuthenticated()" class="header">
-      <div class="header-inner">
-        <nav class="nav">
-          <RouterLink to="/calls">{{ t('nav.calls') }}</RouterLink>
-          <RouterLink v-if="isAdmin()" to="/exercise">{{ t('nav.exercises') }}</RouterLink>
-          <RouterLink v-if="isAdmin()" to="/youth">{{ t('nav.youth') }}</RouterLink>
-          <RouterLink v-if="isAdmin()" to="/members">{{ t('nav.members') }}</RouterLink>
-          <RouterLink to="/statistics">{{ t('nav.statistics') }}</RouterLink>
-          <button class="logout-btn" @click="logout">{{ auth.username }} ⏻</button>
+  <div class="min-h-screen flex flex-col bg-page text-ink">
+    <header v-if="isAuthenticated()" class="bg-surface border-b border-rule">
+      <div class="mx-auto w-full px-4 md:px-6 py-2 md:h-15 flex flex-wrap items-center gap-x-6 gap-y-2"
+           :class="contentWidth">
+        <RouterLink to="/calls" class="flex items-baseline gap-2 shrink-0 text-ink hover:text-ink">
+          <span class="font-condensed font-bold text-xl tracking-wide uppercase">CallStats</span>
+          <span v-if="brigadeName" class="label hidden sm:inline">{{ brigadeName }}</span>
+        </RouterLink>
+
+        <nav class="flex flex-wrap gap-x-5 gap-y-1 grow order-3 md:order-none w-full md:w-auto">
+          <RouterLink to="/calls" class="nav-link">{{ t('nav.calls') }}</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/exercise" class="nav-link">{{ t('nav.exercises') }}</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/youth" class="nav-link">{{ t('nav.youth') }}</RouterLink>
+          <RouterLink v-if="isAdmin()" to="/members" class="nav-link">{{ t('nav.members') }}</RouterLink>
+          <RouterLink to="/statistics" class="nav-link">{{ t('nav.statistics') }}</RouterLink>
         </nav>
+
+        <div class="flex items-center gap-4 shrink-0">
+          <button type="button" class="icon-button" :title="t('theme.toggle')" @click="toggleTheme">
+            <font-awesome-icon :icon="activeTheme() === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon'"/>
+          </button>
+          <span class="tabular text-[13px] text-muted">{{ auth.username }}</span>
+          <button type="button" class="icon-button" :title="t('login.logout')" @click="logout">
+            <font-awesome-icon icon="fa-solid fa-power-off"/>
+          </button>
+        </div>
       </div>
+      <div class="h-[3px] bg-signal"></div>
     </header>
 
-    <div class="app">
-      <main class="main">
-        <RouterView />
-      </main>
-    </div>
+    <main class="grow flex flex-col" :class="isAuthenticated() ? `mx-auto w-full ${contentWidth} px-4 md:px-6 py-6 md:py-7` : ''">
+      <RouterView/>
+    </main>
 
-    <ErrorPopup />
-    <SuccessPopup />
+    <ErrorPopup/>
+    <SuccessPopup/>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        <p>{{ t('app.copyright', { year: new Date().getFullYear() }) }}</p>
+    <footer v-if="isAuthenticated()" class="border-t border-rule bg-surface">
+      <div class="mx-auto w-full px-4 md:px-6 py-3 label" :class="contentWidth">
+        {{ t('app.copyright', {year: new Date().getFullYear()}) }}
       </div>
     </footer>
   </div>
 </template>
 
 <style scoped>
-/* Layout container to push footer to bottom when content is short */
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+.nav-link {
+  color: var(--c-muted);
+  font-size: 15px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s;
 }
 
-/* Content container grows to fill remaining space */
-.app { max-width: 960px; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; flex: 1 0 auto; width: 100%; }
-
-/* Top header bar */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  width: 100%;
-  background: rgba(10, 10, 10, 0.85);
-  backdrop-filter: saturate(180%) blur(8px);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+.nav-link:hover {
+  color: var(--c-ink);
 }
 
-/* header content width aligns with page width */
-.header-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0.75rem 1rem;
+.nav-link.router-link-active {
+  color: var(--c-ink);
+  font-weight: 600;
+  border-bottom-color: var(--c-signal);
+}
+
+.icon-button {
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--c-muted);
+  cursor: pointer;
+  padding: 0;
 }
 
-/* Navigation buttons with orange accents */
-.nav { display: flex; gap: 0.5rem; width: 100%; }
-.nav a, .nav .logout-btn { flex: 1; display: block; text-align: center; padding: 0.5rem 0.75rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 0.5rem; background: rgba(255,255,255,0.03); color: inherit; text-decoration: none; transition: background-color 0.2s, border-color 0.2s, transform 0.05s; font-size: inherit; cursor: pointer; }
-.nav a:hover { background: rgba(249,115,22,0.12); border-color: rgba(249,115,22,0.6); }
-.nav a:active { transform: translateY(1px); }
-.nav a:focus-visible { outline: 3px solid rgba(249,115,22,0.6); outline-offset: 2px; }
-.nav a.router-link-active { font-weight: 700; background: rgba(249,115,22,0.18); border-color: rgba(249,115,22,0.9); }
-
-/* Footer styles: normal flow at the end; sits at bottom when page is short */
-.footer {
-  width: 100%;
-  background: rgba(10, 10, 10, 0.8);
-  backdrop-filter: saturate(180%) blur(6px);
-  border-top: 1px solid rgba(255,255,255,0.08);
+.icon-button:hover {
+  color: var(--c-ink);
+  background: var(--c-raised);
 }
-.footer-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0.75rem 1rem;
-  color: rgba(255,255,255,0.7);
-  font-size: 0.925rem;
-}
-
-.main { padding-top: 1rem; }
 </style>
