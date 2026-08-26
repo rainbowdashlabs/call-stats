@@ -24,11 +24,26 @@ def new_engine():
 
 engine = new_engine()
 
-# Ensure the schema exists, create tables, and deploy SQL functions
-with engine.connect() as conn:
-    schema = os.getenv("DB_SCHEMA", "public")
-    conn.execute(sqlalchemy.text(f"CREATE SCHEMA IF NOT EXISTS {schema}"))
-    conn.commit()
+def ensure_schema(name: str) -> None:
+    """Creates the schema unless it is already there.
+
+    `CREATE SCHEMA` checks for the CREATE privilege on the *database* before `IF NOT EXISTS`
+    can short-circuit, so issuing it unconditionally fails for a role that only holds rights
+    inside an already existing schema. Looking first keeps such a role from needing a privilege
+    it never uses.
+    """
+    with engine.connect() as conn:
+        exists = conn.execute(sqlalchemy.text("SELECT 1 FROM pg_namespace WHERE nspname = :name"),
+                              {"name": name}).first()
+        if exists:
+            return
+        conn.execute(sqlalchemy.text(f"CREATE SCHEMA IF NOT EXISTS {name}"))
+        conn.commit()
+        log.info(f"Created schema {name}")
+
+
+schema = os.getenv("DB_SCHEMA", "public")
+ensure_schema(schema)
 
 # noinspection PyUnusedImports
 import entities.call
