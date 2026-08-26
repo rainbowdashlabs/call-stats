@@ -81,13 +81,26 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex bg-bgmd items-center p-2 rounded-md">
+  <div class="picker-group">
     <NumberPicker ref="dayPicker" :max="maxDays" :min="1" v-model="day" @overflowUp="dayOverflowUp"
                   @overflowDown="dayOverflowDown" @advance="monthPicker?.focus()"/>
-    .
+    <span class="sep">.</span>
     <NumberPicker ref="monthPicker" :max="12" :min="1" v-model="month" @overflowUp="monthOverflowUp"
                   @overflowDown="monthOverflowDown" @advance="yearPicker?.focus()"/>
-    .
+    <span class="sep">.</span>
     <NumberPicker ref="yearPicker" :max="2100" :min="1900" v-model="year"/>
   </div>
 </template>
+
+<style scoped>
+.picker-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.picker-group .sep {
+  color: var(--c-faint);
+  padding-bottom: 8px;
+}
+</style>

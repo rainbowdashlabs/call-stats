@@ -23,7 +23,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex gap-2 bg-bgmd rounded-md">
+  <div class="flex flex-wrap gap-x-3 gap-y-2 items-end">
     <DatePicker ref="datePicker" v-model="model"/>
     <TimePicker v-model="model" :seconds="props.seconds"/>
   </div>

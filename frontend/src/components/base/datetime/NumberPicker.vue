@@ -1,7 +1,6 @@
 <script setup lang="ts">
 
 import {ref, watch} from "vue";
-import SimpleButton from "../buttons/SimpleButton.vue";
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 
 const props = defineProps({
@@ -87,22 +86,97 @@ defineExpose({
 </script>
 
 <template>
-  <div class="gap-2">
-    <SimpleButton class="bg-secondary rounded-t-md" @click="handleUp">
-      <font-awesome-icon icon="fa-solid fa-angle-up"/>
-    </SimpleButton>
-    <input ref="input" type="text" pattern="[0-9]*" @focusin="($event.target as HTMLInputElement).select()"
-           :min="props.min" :max="props.max" v-model="currentValue" @input="handleInput"
-           @keydown.down.prevent="handleDown" @keydown.up.prevent="handleUp"
-           :style="{width: props.max.toString().length + 2 + 'ch'}">
-    <SimpleButton class="bg-secondary rounded-b-md" @click="handleDown">
-      <font-awesome-icon icon="fa-solid fa-angle-down"/>
-    </SimpleButton>
+  <div class="picker">
+    <span v-if="props.label" class="picker-label">{{ props.label }}</span>
+    <div class="picker-body">
+      <input ref="input" type="text" inputmode="numeric" pattern="[0-9]*" :aria-label="props.label"
+             @focusin="($event.target as HTMLInputElement).select()"
+             :min="props.min" :max="props.max" v-model="currentValue" @input="handleInput"
+             @keydown.down.prevent="handleDown" @keydown.up.prevent="handleUp"
+             :style="{width: `calc(${digits}ch + 18px)`}">
+      <div class="picker-steps">
+        <button type="button" tabindex="-1" @click="handleUp" :aria-label="props.label">
+          <font-awesome-icon icon="fa-solid fa-angle-up"/>
+        </button>
+        <button type="button" tabindex="-1" @click="handleDown" :aria-label="props.label">
+          <font-awesome-icon icon="fa-solid fa-angle-down"/>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-input{
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.picker-label {
+  font-family: var(--font-condensed);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+
+.picker-body {
+  display: flex;
+  align-items: stretch;
+  height: 38px;
+  border: 1px solid var(--c-rule);
+  border-radius: var(--radius-control);
+  background: var(--c-surface);
+  overflow: hidden;
+}
+
+.picker-body:focus-within {
+  border-color: var(--c-focus);
+  box-shadow: 0 0 0 1px var(--c-focus);
+}
+
+input {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--c-ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
   text-align: center;
+  padding: 0 6px;
+  min-width: 0;
+}
+
+.picker-steps {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--c-hairline);
+}
+
+.picker-steps button {
+  flex: 1;
+  width: 22px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--c-faint);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-steps button:hover {
+  background: var(--c-raised);
+  color: var(--c-ink);
+}
+
+.picker-steps button:first-child {
+  border-bottom: 1px solid var(--c-hairline);
 }
 </style>

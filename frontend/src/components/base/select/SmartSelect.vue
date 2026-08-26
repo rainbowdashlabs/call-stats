@@ -133,18 +133,93 @@ defineExpose({
         @focus="onFocus"
         @blur="onBlur"
         :placeholder="placeholder ?? t('common.searchHint')"
-        class="bg-gray-800 text-gray-50 w-full px-3 py-2 rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+        class="field"
     />
     <div v-if="open && matches.length > 0" ref="list"
-         class="absolute z-10 w-full mt-1 bg-gray-800 border border-gray-600 rounded shadow-lg max-h-60 overflow-y-auto">
+         class="menu">
       <div v-for="(item, i) in matches"
            :key="keyMapper(item)"
            @mousedown.prevent="pick(item)"
-           class="flex items-baseline justify-between gap-3 px-3 py-2 cursor-pointer"
-           :class="i === cursor ? 'bg-gray-600' : 'hover:bg-gray-700'">
+           class="option"
+           :class="{active: i === cursor}">
         <span>{{ valueMapper(item) }}</span>
-        <span v-if="hintMapper" class="text-xs text-gray-400 shrink-0">{{ hintMapper(item) }}</span>
+        <span v-if="hintMapper" class="option-hint">{{ hintMapper(item) }}</span>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 27px;
+  padding: 0 9px;
+  background: var(--c-raised);
+  border: 1px solid var(--c-rule);
+  border-radius: 3px;
+  font-size: 14px;
+  color: var(--c-ink);
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  color: var(--c-faint);
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.chip button:hover {
+  color: var(--c-signal);
+}
+
+.menu {
+  position: absolute;
+  z-index: 50;
+  width: 100%;
+  margin-top: -1px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--c-surface);
+  border: 1px solid var(--c-rule);
+  border-radius: 0 0 var(--radius-control) var(--radius-control);
+  box-shadow: 0 6px 16px rgb(0 0 0 / 0.12);
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  cursor: pointer;
+  border-top: 1px solid var(--c-hairline);
+}
+
+.option:first-child {
+  border-top: none;
+}
+
+.option:hover {
+  background: var(--c-hairline);
+}
+
+.option.active {
+  background: var(--c-raised);
+  box-shadow: inset 2px 0 0 var(--c-signal);
+}
+
+.option-hint {
+  font-family: var(--font-condensed);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  flex-shrink: 0;
+}
+</style>

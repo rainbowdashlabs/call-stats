@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import SimpleButton from "../buttons/SimpleButton.vue";
 import {watch} from "vue";
+import {t} from "../../../i18n";
 
 const props = defineProps({
   pages: {
@@ -54,28 +54,62 @@ watch(page, () => {
 </script>
 
 <template>
-  <div class="flex justify-center">
-    <SimpleButton @click="page = Math.max(page  - 1, 1)" class="border-2 border-accent w-8 hoverable">
+  <div class="pager">
+    <button type="button" class="page-btn" :disabled="page <= 1" @click="page = Math.max(page - 1, 1)"
+            :aria-label="t('common.previousPage')">
       <font-awesome-icon icon="fa-solid fa-arrow-left"/>
-    </SimpleButton>
-    <div v-for="num in pageList()" :key="num" class="flex">
-      <div v-if="num === '...'" class="w-8 flex items-center justify-center">
-        {{ num }}
-      </div>
-      <div v-else
-           @click="page = num as number"
-           class="hoverable border-2 border-accent w-8 cursor-pointer flex items-center justify-center"
-           :class="{ 'bg-blue-900': num === page }">
-        {{ num }}
-      </div>
-    </div>
-    <SimpleButton @click="page = Math.min(page + 1, props.pages)" class="border-2 border-accent w-8 hoverable">
+    </button>
+    <template v-for="num in pageList()" :key="num">
+      <span v-if="num === '...'" class="gap">…</span>
+      <button v-else type="button" class="page-btn tabular" :class="{current: num === page}"
+              @click="page = num as number">{{ num }}</button>
+    </template>
+    <button type="button" class="page-btn" :disabled="page >= props.pages"
+            @click="page = Math.min(page + 1, props.pages)" :aria-label="t('common.nextPage')">
       <font-awesome-icon icon="fa-solid fa-arrow-right"/>
-    </SimpleButton>
+    </button>
   </div>
-
 </template>
 
 <style scoped>
+.pager {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
 
+.page-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid var(--c-rule);
+  border-radius: 3px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--c-raised);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-btn.current {
+  background: var(--c-action);
+  border-color: var(--c-action);
+  color: var(--c-action-ink);
+  font-weight: 600;
+}
+
+.gap {
+  display: flex;
+  align-items: center;
+  padding: 0 3px;
+  color: var(--c-faint);
+}
 </style>

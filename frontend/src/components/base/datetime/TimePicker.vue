@@ -43,13 +43,13 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex bg-bgmd items-center p-2 rounded-md">
+  <div class="picker-group">
     <NumberPicker ref="hourPicker" :max="23" :min="0" v-model="hour" :label="t('common.hour')"
                   @advance="minutePicker?.focus()"/>
-    :
+    <span class="sep">:</span>
     <NumberPicker ref="minutePicker" :max="59" :min="0" v-model="minute" :label="t('common.minute')"
                   @advance="props.seconds ? secondPicker?.focus() : undefined"/>
-    <div v-if="props.seconds"> : </div>
+    <span v-if="props.seconds" class="sep">:</span>
     <NumberPicker v-if="props.seconds" ref="secondPicker" :max="59" :min="0" v-model="seconds"
                   :label="t('common.second')"/>
   </div>
@@ -57,5 +57,14 @@ defineExpose({
 </template>
 
 <style scoped>
+.picker-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
 
+.picker-group .sep {
+  color: var(--c-faint);
+  padding-bottom: 8px;
+}
 </style>

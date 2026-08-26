@@ -29,8 +29,9 @@ function dismiss(id: number) {
 </script>
 
 <template>
-  <div class="success-container" v-if="state.items.length">
-    <div v-for="it in state.items" :key="it.id" class="success-card">
+  <div class="toast-container" v-if="state.items.length">
+    <div v-for="it in state.items" :key="it.id" class="toast" style="border-left: 3px solid var(--c-band)">
+      <font-awesome-icon class="icon" icon="fa-solid fa-circle-check" style="color: var(--c-band)"/>
       <div class="msg">{{ it.message }}</div>
       <button class="close" @click="dismiss(it.id)" :aria-label="t('common.close')">&times;</button>
     </div>
@@ -38,36 +39,59 @@ function dismiss(id: number) {
 </template>
 
 <style scoped>
-.success-container {
+.toast-container {
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: 18px;
+  right: 18px;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 9px;
   z-index: 1000;
 }
-.success-card {
+
+.toast {
   position: relative;
-  max-width: 28rem;
-  background: #14532d;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-left: 4px solid #22c55e;
-  padding: 0.75rem 2rem 0.75rem 0.75rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 26rem;
+  padding: 12px 34px 12px 13px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-rule);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 22px rgb(0 0 0 / 0.16);
 }
-.msg { font-weight: 600; }
+
+.toast .icon {
+  margin-top: 2px;
+}
+
+.msg {
+  font-weight: 500;
+  color: var(--c-ink);
+}
+
+.meta {
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
 .close {
   position: absolute;
-  right: 0.25rem;
-  top: 0.25rem;
+  right: 8px;
+  top: 8px;
   background: transparent;
-  color: #fff;
   border: none;
-  font-size: 1.25rem;
+  color: var(--c-faint);
+  font-size: 16px;
+  line-height: 1;
   cursor: pointer;
+  padding: 2px;
 }
-.close:focus-visible { outline: 2px solid #fff; border-radius: 0.25rem; }
+
+.close:hover {
+  color: var(--c-ink);
+}
 </style>
