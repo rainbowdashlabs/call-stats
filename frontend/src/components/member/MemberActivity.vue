@@ -82,7 +82,7 @@ onMounted(async () => {
   await load()
 })
 
-/** Eigene Alarme gegen die der ganzen Wehr, rollierend (Grafana 30/31/32). */
+/** Eigene Alarme gegen die der ganzen Wehr, rollend (Grafana 30/31/32). */
 const rollingOption = computed(() => {
   if (!rolling.value.length) return null
   const days = rolling.value.map(d => d.day)

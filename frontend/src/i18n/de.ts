@@ -152,14 +152,14 @@ export default {
             rank: 'Platz',
             shareHours: 'Anteil Stunden',
             empty: 'Keine Einsätze in {year}.',
-            rolling: 'Eigene Anwesenheit ({days}-Tage rollierend)',
+            rolling: 'Eigene Anwesenheit ({days}-Tage rollend)',
             hourProfile: 'Eigene Alarmzeiten nach Uhrzeit'
         }
     },
     statistics: {
         eyebrow: 'Auswertung',
         title: 'Statistiken',
-        rollingDays: 'Rollierende Tage',
+        rollingDays: 'Rollende Tage',
         groups: {
             misc: 'Wachbesetzung'
         },
@@ -188,7 +188,7 @@ export default {
             halfShare: '50%-Anteil'
         },
         charts: {
-            dailyCalls: 'Einsätze ({days}-Tage rollierend)',
+            dailyCalls: 'Einsätze ({days}-Tage rollend)',
             callGroups: 'Einsätze nach Gruppe',
             monthlyGroups: 'Einsätze pro Monat nach Gruppe',
             memberRanking: 'Mitglieder-Rangliste',
@@ -247,7 +247,7 @@ export default {
             p10Strength: '10-Perzentil',
             shortage: 'Personalmangel',
             groupsYearly: 'Stichwortgruppen im Jahresvergleich',
-            memberRolling: 'Anwesenheit je Mitglied ({days}-Tage rollierend)',
+            memberRolling: 'Anwesenheit je Mitglied ({days}-Tage rollend)',
             total: 'Gesamt',
             percentCalls: 'Anteil Einsätze',
             percentHours: 'Anteil Stunden',

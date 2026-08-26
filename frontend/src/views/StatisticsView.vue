@@ -267,8 +267,8 @@ const dailyCallsChartOption = computed(() => ({
     {name: t('statistics.charts.calls'), type: 'line', data: filteredDailyCalls.value.map(d => d.call_count), smooth: true},
     {name: t('statistics.charts.hours'), type: 'line', yAxisIndex: 1, data: filteredDailyCalls.value.map(d => d.call_hours), smooth: true}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '10%', top: 90},
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '10%', top: 90, bottom: 66},
   dataZoom: zoom(theme)
 }))
 
@@ -362,7 +362,7 @@ const callStrengthsOption = computed(() => {
       type: 'bar',
       data: rows.map(r => ({value: r.strength, itemStyle: {color: barColor(r)}}))
     }],
-    grid: {left: '10%', right: '5%', top: 70, bottom: 80},
+    grid: {left: '10%', right: '5%', top: 70, bottom: 132},
     dataZoom: zoom(theme)
   }
 })
@@ -379,8 +379,8 @@ const strengthByHourOption = computed(() => ({
     {name: t('statistics.charts.medianStrength'), type: 'line', smooth: true, data: strengthByHour.value.map(h => h.median_strength)},
     {name: t('statistics.charts.p10Strength'), type: 'line', smooth: true, data: strengthByHour.value.map(h => h.p10_strength)}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '5%', top: 90}
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '5%', top: 90, bottom: 66}
 }))
 
 /** Abbrüche, bei denen Personal oder Gerät gefehlt hat (Grafana 23). */
@@ -393,7 +393,8 @@ const shortageOption = computed(() => {
     tooltip: tooltip(theme, 'item'),
     series: [{
       type: 'pie',
-      radius: ['40%', '70%'],
+      radius: ['38%', '66%'],
+      center: ['34%', '54%'],
       data: shortages.map(r => ({name: abortReasonLabel(r.reason), value: r.call_count})),
       label: {color: theme.muted, fontSize: theme.fontSize}
     }],
@@ -418,8 +419,8 @@ const groupsYearlyOption = computed(() => {
       itemStyle: {color: groupColor(group)},
       data: years.map(year => groupsYearly.value.find(e => e.year === year && e.group === group)?.call_count ?? 0)
     })),
-    legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '5%', top: 90}
+    legend: legend(theme, {top: 40}),
+    grid: {left: '10%', right: '5%', top: 90, bottom: 66}
   }
 })
 
@@ -429,7 +430,8 @@ const callGroupsPieOption = computed(() => ({
   tooltip: tooltip(theme, 'item'),
   series: [{
     type: 'pie',
-    radius: ['40%', '70%'],
+    radius: ['38%', '66%'],
+      center: ['34%', '54%'],
     data: callGroups.value.map(g => ({
       name: groupLabel(g.group),
       value: g.call_count,
@@ -453,7 +455,7 @@ const callGroupsBarOption = computed(() => {
       data: sorted.map(g => ({value: g.call_count, itemStyle: {color: groupColor(g.group)}})),
       label: {show: true, position: 'top', color: theme.muted, fontSize: theme.fontSize}
     }],
-    grid: {left: '10%', right: '5%', top: 70}
+    grid: {left: '10%', right: '5%', top: 70, bottom: 66}
   }
 })
 
@@ -473,8 +475,8 @@ const monthlyGroupsChartOption = computed(() => {
       itemStyle: {color: groupColor(group)},
       data: months.map(m => callGroupsMonthly.value.find(d => d.month === m && d.group === group)?.call_count ?? 0)
     })),
-    legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '5%', top: 90},
+    legend: legend(theme, {top: 40}),
+    grid: {left: '10%', right: '5%', top: 90, bottom: 66},
     dataZoom: zoom(theme)
   }
 })
@@ -499,8 +501,8 @@ const memberRankingChartOption = computed(() => {
       {name: t('statistics.charts.percentHours'), type: 'line', yAxisIndex: 2, symbolSize: theme.symbolSize,
         data: sorted.map(m => m.call_hours_perc)}
     ],
-    legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '14%', bottom: '20%', top: 90},
+    legend: legend(theme, {top: 40}),
+    grid: {left: '10%', right: '14%', bottom: 132, top: 90},
     dataZoom: zoom(theme)
   }
 })
@@ -520,7 +522,7 @@ const yearComparisonOption = computed(() => ({
     })),
     label: {show: true, position: 'top', color: theme.muted, fontSize: theme.fontSize}
   }],
-  grid: {left: '10%', right: '5%', top: 70}
+  grid: {left: '10%', right: '5%', top: 70, bottom: 66}
 }))
 
 const hoursComparisonOption = computed(() => ({
@@ -533,8 +535,8 @@ const hoursComparisonOption = computed(() => ({
     {name: t('statistics.charts.hours'), type: 'bar', data: yearlySeries.value.map(e => e.call_hours)},
     {name: t('statistics.charts.crewHours'), type: 'bar', data: yearlySeries.value.map(e => e.crew_hours)}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '12%', right: '5%', top: 90}
+  legend: legend(theme, {top: 40}),
+  grid: {left: '12%', right: '5%', top: 90, bottom: 66}
 }))
 
 const crewComparisonOption = computed(() => ({
@@ -551,7 +553,7 @@ const crewComparisonOption = computed(() => ({
     lineStyle: {width: theme.lineWidth},
     symbolSize: theme.symbolSize
   }],
-  grid: {left: '10%', right: '5%', top: 70}
+  grid: {left: '10%', right: '5%', top: 70, bottom: 66}
 }))
 
 const timeProfileOption = computed(() => ({
@@ -566,7 +568,7 @@ const timeProfileOption = computed(() => ({
     calculable: true,
     orient: 'horizontal',
     left: 'center',
-    bottom: 0,
+    bottom: 4,
     textStyle: {color: theme.muted, fontSize: theme.fontSize},
     inRange: {color: ['#1e293b', '#f97316']}
   },
@@ -575,7 +577,7 @@ const timeProfileOption = computed(() => ({
     data: timeProfileGrid(timeProfile.value),
     label: {show: false}
   }],
-  grid: {left: '8%', right: '5%', top: 70, bottom: 70}
+  grid: {left: '8%', right: '5%', top: 70, bottom: 96}
 }))
 
 const topSubjectsOption = computed(() => {
@@ -591,7 +593,7 @@ const topSubjectsOption = computed(() => {
       data: sorted.map(s => s.call_count),
       label: {show: true, position: 'right', color: theme.muted, fontSize: theme.fontSize}
     }],
-    grid: {left: '28%', right: '10%', top: 70}
+    grid: {left: '28%', right: '10%', top: 70, bottom: 66}
   }
 })
 
@@ -602,7 +604,7 @@ const durationsOption = computed(() => ({
   xAxis: categoryAxis(callDurations.value.map(d => d.bucket), theme),
   yAxis: valueAxis(t('statistics.charts.count'), theme),
   series: [{type: 'bar', data: callDurations.value.map(d => d.call_count)}],
-  grid: {left: '10%', right: '5%', top: 70}
+  grid: {left: '10%', right: '5%', top: 70, bottom: 66}
 }))
 
 const abortReasonsOption = computed(() => {
@@ -613,7 +615,8 @@ const abortReasonsOption = computed(() => {
     tooltip: tooltip(theme, 'item'),
     series: [{
       type: 'pie',
-      radius: ['40%', '70%'],
+      radius: ['38%', '66%'],
+      center: ['34%', '54%'],
       data: abortReasons.value.map(r => ({name: abortReasonLabel(r.reason), value: r.call_count})),
       label: {color: theme.muted, fontSize: theme.fontSize}
     }],
@@ -635,7 +638,7 @@ const coverageOption = computed(() => {
       data: [c.with_leader, c.with_driver, c.with_both].map(v => Math.round(v * 100 / c.call_count)),
       label: {show: true, position: 'top', formatter: '{c} %', color: theme.muted, fontSize: theme.fontSize}
     }],
-    grid: {left: '10%', right: '5%', top: 70}
+    grid: {left: '10%', right: '5%', top: 70, bottom: 66}
   }
 })
 
@@ -650,7 +653,7 @@ const turnoutOption = computed(() => ({
     data: turnout.value.map(b => b.member_count),
     label: {show: true, position: 'top', color: theme.muted, fontSize: theme.fontSize}
   }],
-  grid: {left: '10%', right: '5%', top: 70}
+  grid: {left: '10%', right: '5%', top: 70, bottom: 66}
 }))
 
 const exerciseAttendanceOption = computed(() => ({
@@ -660,7 +663,7 @@ const exerciseAttendanceOption = computed(() => ({
   xAxis: categoryAxis(exerciseSessions.value.map(e => e.exercise_date), theme, 45),
   yAxis: valueAxis(t('statistics.charts.participants'), theme),
   series: [{type: 'bar', data: exerciseSessions.value.map(e => e.attendance)}],
-  grid: {left: '10%', right: '5%', bottom: '22%', top: 70},
+  grid: {left: '10%', right: '5%', bottom: 132, top: 70},
   dataZoom: zoom(theme)
 }))
 
@@ -674,8 +677,8 @@ const exerciseRankingOption = computed(() => ({
     {name: t('statistics.charts.attendance'), type: 'bar', data: exerciseMembers.value.map(m => m.attended)},
     {name: '%', type: 'line', yAxisIndex: 1, data: exerciseMembers.value.map(m => m.attended_perc)}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '10%', bottom: '22%', top: 90},
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '10%', bottom: 132, top: 90},
   dataZoom: zoom(theme)
 }))
 
@@ -689,8 +692,8 @@ const exerciseComparisonOption = computed(() => ({
     {name: t('statistics.charts.exercises'), type: 'bar', data: yearlySeries.value.map(e => e.exercise_count)},
     {name: t('statistics.charts.hours'), type: 'line', yAxisIndex: 1, data: yearlySeries.value.map(e => e.exercise_hours)}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '10%', top: 90}
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '10%', top: 90, bottom: 66}
 }))
 
 const youthSessionsOption = computed(() => ({
@@ -710,8 +713,8 @@ const youthSessionsOption = computed(() => ({
       data: youthSessions.value.map(y => y.instructors ? Math.round(y.participants / y.instructors * 10) / 10 : 0)
     }
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '5%', bottom: '22%', top: 90},
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '5%', bottom: 132, top: 90},
   dataZoom: zoom(theme)
 }))
 
@@ -734,8 +737,8 @@ const youthComparisonOption = computed(() => ({
           ? Math.round(e.youth_participants / e.youth_instructors * 10) / 10 : 0)
     }
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '10%', top: 90}
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '10%', top: 90, bottom: 66}
 }))
 
 const youthRankingOption = computed(() => {
@@ -753,8 +756,8 @@ const youthRankingOption = computed(() => {
         itemStyle: {color: '#fb923c'}},
       {name: t('statistics.charts.hours'), type: 'bar', yAxisIndex: 1, data: instructors.map(m => m.youth_hours)}
     ],
-    legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '10%', bottom: '22%', top: 90},
+    legend: legend(theme, {top: 40}),
+    grid: {left: '10%', right: '10%', bottom: 132, top: 90},
     dataZoom: zoom(theme)
   }
 })
@@ -787,8 +790,8 @@ const combinedOption = computed(() => {
       {name: t('statistics.sections.exercises'), type: 'bar', stack: 'total', data: top.map(m => m.exercise_hours)},
       {name: t('statistics.sections.youth'), type: 'bar', stack: 'total', data: top.map(m => m.youth_hours)}
     ],
-    legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '5%', bottom: '22%', top: 90},
+    legend: legend(theme, {top: 40}),
+    grid: {left: '10%', right: '5%', bottom: 132, top: 90},
     dataZoom: zoom(theme)
   }
 })
@@ -804,8 +807,8 @@ const totalHoursComparisonOption = computed(() => ({
     {name: t('statistics.sections.exercises'), type: 'bar', stack: 'total', data: yearlySeries.value.map(e => e.exercise_hours)},
     {name: t('statistics.sections.youth'), type: 'bar', stack: 'total', data: yearlySeries.value.map(e => e.youth_hours)}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '5%', top: 90}
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '5%', top: 90, bottom: 66}
 }))
 
 const membershipOption = computed(() => ({
@@ -820,8 +823,8 @@ const membershipOption = computed(() => ({
     {name: t('statistics.charts.joined'), type: 'line', data: membership.value.map(m => m.joined_in_year)},
     {name: t('statistics.charts.retired'), type: 'line', data: membership.value.map(m => m.retired_in_year)}
   ],
-  legend: legend(theme, {top: 30}),
-  grid: {left: '10%', right: '5%', top: 90}
+  legend: legend(theme, {top: 40}),
+  grid: {left: '10%', right: '5%', top: 90, bottom: 66}
 }))
 
 function present() {

@@ -104,7 +104,7 @@ if (typeof document !== 'undefined') {
 }
 
 export function title(text: string, theme: ChartTheme) {
-    return {text, left: 'center', textStyle: {color: theme.text, fontSize: theme.titleSize}}
+    return {text, left: 'center', top: 0, textStyle: {color: theme.text, fontSize: theme.titleSize}}
 }
 
 export function categoryAxis(data: (string | number)[], theme: ChartTheme, rotate = 0) {
@@ -152,7 +152,7 @@ export function toolbox(theme: ChartTheme) {
 
 export function zoom(theme: ChartTheme) {
     if (!theme.interactive) return undefined
-    return [{type: 'inside'}, {type: 'slider', textStyle: {color: theme.muted}}]
+    return [{type: 'inside'}, {type: 'slider', height: 16, bottom: 8, textStyle: {color: theme.muted}}]
 }
 
 /** Paints the selected year in the accent colour and every other year muted. */
