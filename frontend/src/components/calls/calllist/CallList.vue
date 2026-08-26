@@ -2,11 +2,12 @@
 
 import {listCalls} from "../../../api/calls.ts";
 import {useRoute} from "vue-router";
-import {onMounted, ref, watch} from "vue";
+import {onUnmounted, onMounted, ref, watch} from "vue";
 import type {FullCall} from "../../../interfaces/Call.ts";
 import router from "../../../router";
 import CallEntry from "./CallEntry.vue";
 import Navigation from "../../base/pagination/Navigation.vue";
+import {bus} from "../../../events/bus.ts";
 import {t} from "../../../i18n";
 
 const route = useRoute()
@@ -39,54 +40,76 @@ async function load() {
   }
 }
 
-onMounted(load)
+let stopListening: (() => void) | null = null
+
+onMounted(() => {
+  void load()
+  stopListening = bus.on('call-created', () => {
+    page.value = 1
+    void load()
+  })
+})
+
+onUnmounted(() => {
+  stopListening?.()
+  stopListening = null
+})
 
 </script>
 
 <template>
-
-
-  <div class="flex justify-evenly">
-    <div class="text-2xl">
-      {{ t('calls.title') }}
+  <section class="card">
+    <div class="flex items-baseline justify-between px-5 pt-4 pb-3 border-b border-rule">
+      <h2 class="headline text-xl">{{ t('calls.title') }}</h2>
+      <label class="flex items-center gap-2">
+        <span class="label">{{ t('common.entriesPerPage') }}</span>
+        <select v-model="pageSize" class="field tabular" style="height: 30px; width: auto; padding: 0 6px;">
+          <option v-for="i in [5,10,20,50,100]" :value="i">{{ i }}</option>
+        </select>
+      </label>
     </div>
-    <div class="flex justify-end">
-      <div class="mr-2 content-center">{{ t('common.entriesPerPage') }}</div>
-      <select v-model="pageSize">
-        <option v-for="i in [5,10,20,50,100]" :value="i">{{ i }}</option>
-      </select>
+
+    <div class="head-row">
+      <span class="label">{{ t('common.subject') }}</span>
+      <span class="label hide-narrow">{{ t('calls.band') }}</span>
+      <span class="label text-right hide-narrow">{{ t('common.start') }}</span>
+      <span class="label text-right">{{ t('common.duration') }}</span>
+      <span class="label text-right">{{ t('calls.strength') }}</span>
     </div>
-  </div>
 
-  <Navigation :pages="pages" v-model="page"/>
+    <div v-if="loading" class="p-8 text-center text-muted">{{ t('common.loading') }}</div>
+    <div v-else-if="pageContent.length === 0" class="p-8 text-center text-muted">{{ t('calls.empty') }}</div>
+    <CallEntry v-else v-for="call in pageContent" :key="call.id" :call="call"/>
 
-  <div class="border-2 rounded-2xl border-accent grid grid-cols-1 gap-2 p-2 mt-2 mb-2">
-    <div class="grid grid-cols-5 gap-2 highlight rounded-2xl" @click="load" style="cursor: pointer">
-      <div>{{ t('common.subject') }}</div>
-      <div>{{ t('common.start') }}</div>
-      <div>{{ t('common.end') }}</div>
-      <div>{{ t('calls.strength') }}</div>
-      <div>{{ t('calls.meta') }}</div>
+    <div class="px-5 py-3 border-t border-rule">
+      <Navigation :pages="pages" v-model="page"/>
     </div>
-    <div v-if="loading" class="text-center p-4">{{ t('common.loading') }}</div>
-    <div v-else-if="pageContent.length === 0" class="text-center p-4">{{ t('calls.empty') }}</div>
-    <CallEntry v-else v-for="call in pageContent" :call="call"/>
-  </div>
-
-  <Navigation :pages="pages" v-model="page"/>
-
+  </section>
 </template>
 
 <style scoped>
-SimpleButton.hoverable:hover{
-  background-color: var(--color-accent-secondary);
-}
-div.hoverable:hover {
-  background-color: var(--color-accent-secondary);
-}
-
-div.chosen {
-  background-color: var(--color-accent);
+.head-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px 52px;
+  gap: 12px;
+  padding: 9px 18px;
+  background: var(--c-raised);
 }
 
+@media (min-width: 900px) {
+  .call-row, .head-row {
+    grid-template-columns: minmax(0, 1fr) 190px 62px 62px 52px;
+    gap: 16px;
+  }
+}
+
+.hide-narrow {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .hide-narrow {
+    display: block;
+  }
+}
 </style>

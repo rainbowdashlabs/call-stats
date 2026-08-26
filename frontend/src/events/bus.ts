@@ -37,6 +37,11 @@ export type SuccessEventPayload = {
   message: string
 }
 
+/** Announces that a call was stored, so any list showing calls can pick it up. */
+export function emitCallCreated() {
+  bus.emit('call-created', null)
+}
+
 export function emitSuccess(message: string) {
   bus.emit<SuccessEventPayload>('success', { message })
 }

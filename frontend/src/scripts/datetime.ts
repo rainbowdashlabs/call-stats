@@ -18,6 +18,11 @@ export function formatDateTime(date: string): string {
     return new Date(date).toLocaleString('de-DE')
 }
 
+/** Day and time without the year, short enough for an axis label. */
+export function formatDayTime(date: string): string {
+    return new Date(date).toLocaleString('de-DE', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})
+}
+
 /**
  * Formats a date that the API may deliver either way: dates are sent as unix timestamps but
  * come back as ISO strings, because the backend's `EpochDate` only converts on the way in.
@@ -25,6 +30,27 @@ export function formatDateTime(date: string): string {
 export function formatDate(value: number | string): string {
     const date = typeof value === 'number' ? new Date(value * 1000) : new Date(value)
     return date.toLocaleDateString('de-DE')
+}
+
+/** Renders a span of minutes as h:mm, the way a duty log writes it. */
+export function formatDuration(minutes: number): string {
+    const whole = Math.max(0, Math.round(minutes))
+    return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`
+}
+
+/**
+ * Where a call sits on a 24-hour track: how far into the day it starts and how much of the
+ * day it covers, both as percentages, clamped so a call running past midnight ends at 24:00.
+ */
+export function dayPosition(start: string | number, end: string | number): { left: number, width: number } {
+    const from = typeof start === 'number' ? new Date(start * 1000) : new Date(start)
+    const to = typeof end === 'number' ? new Date(end * 1000) : new Date(end)
+    const startMinute = from.getHours() * 60 + from.getMinutes()
+    const minutes = Math.max(1, (to.getTime() - from.getTime()) / 60000)
+    return {
+        left: (startMinute / 1440) * 100,
+        width: (Math.min(minutes, 1440 - startMinute) / 1440) * 100
+    }
 }
 
 export function getDaysInMonth(year: number, month: number): number {

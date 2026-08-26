@@ -6,12 +6,13 @@ import {listMembers} from "../../../api/members.ts";
 import type {Member} from "../../../interfaces/Member.ts";
 import SmartMultiSelect from "../../base/select/SmartMultiSelect.vue";
 import {createCall, listAbortReasons, listCalls} from "../../../api/calls.ts";
-import {emitError, emitSuccess} from "../../../events/bus.ts";
+import {emitCallCreated, emitError, emitSuccess} from "../../../events/bus.ts";
 import {ADateTime} from "../../../scripts/datetime.ts";
 import DateTimePicker from "../../base/datetime/DateTimePicker.vue";
 import TimePicker from "../../base/datetime/TimePicker.vue";
 import NumberPicker from "../../base/datetime/NumberPicker.vue";
 import SmartSelect from "../../base/select/SmartSelect.vue";
+import ConfirmButton from "../../base/buttons/derivates/ConfirmButton.vue";
 import {t} from "../../../i18n";
 
 const SUGGESTED_SUBJECTS = 8
@@ -111,6 +112,7 @@ async function submit() {
 
     await createCall(call)
     emitSuccess(t('calls.created'))
+    emitCallCreated()
     chosenSubjects.value = []
     selectedMembers.value = []
     abort_reason.value = null
@@ -126,41 +128,45 @@ async function submit() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    <div class="text-2xl">{{ t('calls.createTitle') }}</div>
-    <div>
-      {{ t('common.subject') }}
+  <section class="card p-5 flex flex-col gap-4">
+    <div class="flex items-baseline justify-between">
+      <h2 class="headline text-xl">{{ t('calls.createTitle') }}</h2>
+      <span class="label">{{ t('calls.shortcutHint') }}</span>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <span class="label">{{ t('common.subject') }}</span>
       <SmartMultiSelect ref="subjectSelect" v-model="chosenSubjects" :options="subjects"
                         :value-mapper="(e:Subject) => e.name" :key-mapper="(e: Subject) => e.id!"
                         :weight-mapper="(e:Subject) => e.usage ?? 0" :hint-mapper="(e:Subject) => e.group"
                         :empty-limit="SUGGESTED_SUBJECTS"/>
     </div>
 
-    <div class="flex justify-center gap-5">
-      <div class="gap-2">
-        <span>{{ t('common.start') }}</span>
+    <div class="flex flex-wrap items-end gap-6">
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.start') }}</span>
         <DateTimePicker ref="startPicker" v-model="start"/>
       </div>
-      <div class="gap-2">
-        <span>{{ t('common.end') }}</span>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.end') }}</span>
         <TimePicker v-model="end"/>
       </div>
-      <div class="gap-2">
-        <span>{{ t('calls.duration') }}</span>
-        <NumberPicker class="bg-bgmd rounded-md p-2" :max="1439" v-model="duration" :min="0"/>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('calls.duration') }}</span>
+        <NumberPicker :max="1439" :min="0" v-model="duration"/>
       </div>
-      <div class="gap-2">
-        {{ t('calls.followUp') }}
-        <NumberPicker class="bg-bgmd rounded-md p-2" :max="1000" v-model="additional" :min="0"/>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('calls.followUp') }}</span>
+        <NumberPicker :max="1000" :min="0" v-model="additional"/>
       </div>
     </div>
 
-
-    <div>
-      <div class="flex items-center gap-2">
-        {{ t('common.members') }}
-        <button type="button" tabindex="-1" @click="addLastCrew"
-                class="text-xs bg-gray-700 text-gray-100 px-2 py-1 rounded">{{ t('calls.lastCrew') }}
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between">
+        <span class="label">{{ t('common.members') }} · <span class="tabular text-ink">{{ selectedMembers.length }}</span></span>
+        <button type="button" tabindex="-1" class="ghost-action" @click="addLastCrew">
+          <font-awesome-icon icon="fa-solid fa-users"/>
+          {{ t('calls.lastCrew') }}
         </button>
       </div>
       <SmartMultiSelect ref="memberSelect" v-model="selectedMembers" :options="members"
@@ -168,26 +174,45 @@ async function submit() {
                         :weight-mapper="(e:Member) => e.usage ?? 0" :empty-limit="SUGGESTED_MEMBERS"/>
     </div>
 
-    <div>
-      {{ t('calls.abortReason') }}
-      <SmartSelect ref="reasonSelect" :key-mapper="(v) => v" :value-mapper="(k) => k as string"
-                   :options="abort_reasons" :generator="(v:string) => v || null" v-model="abort_reason"/>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('calls.abortReason') }}</span>
+        <SmartSelect ref="reasonSelect" :key-mapper="(v) => v" :value-mapper="(k) => k as string"
+                     :options="abort_reasons" :generator="(v:string) => v || null" v-model="abort_reason"/>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.note') }}</span>
+        <input ref="noteInput" v-model="note" type="text" class="field"/>
+      </div>
     </div>
 
-    <div>
-      {{ t('common.note') }}
-      <input ref="noteInput" v-model="note" type="text" :placeholder="t('common.note')"
-             class="bg-gray-800 text-gray-50 w-full"/>
+    <div class="flex items-center gap-4 pt-1">
+      <ConfirmButton :disabled="!canSubmit" @click="submit">{{ t('common.create') }}</ConfirmButton>
+      <span class="tabular text-xs text-faint">{{ t('calls.shortcuts') }}</span>
     </div>
-
-    <button @click="submit" :disabled="!canSubmit"
-            class="bg-green-500 text-white p-2 disabled:opacity-50 disabled:cursor-not-allowed">
-      {{ t('common.create') }}
-    </button>
-    <div class="text-xs text-gray-400">{{ t('calls.shortcuts') }}</div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
+.ghost-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--c-rule);
+  border-radius: 3px;
+  background: var(--c-surface);
+  color: var(--c-ink);
+  font-family: var(--font-condensed);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
 
+.ghost-action:hover {
+  background: var(--c-raised);
+}
 </style>
