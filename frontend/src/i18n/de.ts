@@ -27,6 +27,8 @@ export default {
     common: {
         loading: 'Laden...',
         create: 'Anlegen',
+        edit: 'Bearbeiten',
+        save: 'Speichern',
         add: 'Hinzufügen',
         cancel: 'Abbrechen',
         delete: 'Löschen',
@@ -35,10 +37,12 @@ export default {
         code: 'Code: {code}',
         search: 'Suchen...',
         searchHint: 'Zum Suchen tippen...',
-        perPage: 'Pro Seite:',
-        entriesPerPage: 'Einträge pro Seite:',
-        id: 'ID:',
-        name: 'Name:',
+        perPage: 'Pro Seite',
+        previousPage: 'Vorherige Seite',
+        nextPage: 'Nächste Seite',
+        entriesPerPage: 'Einträge pro Seite',
+        id: 'ID',
+        name: 'Name',
         note: 'Notiz',
         date: 'Datum',
         hour: 'Stunde',
@@ -60,6 +64,9 @@ export default {
         instructors: 'Betreuer'
     },
     login: {
+        logout: 'Abmelden',
+        eyebrow: 'Einsatzdokumentation',
+        claim: 'Jeder Einsatz erfasst. Jede Stunde belegt.',
         title: 'CallStats Anmeldung',
         user: 'Benutzer',
         password: 'Passwort',
@@ -69,23 +76,29 @@ export default {
     calls: {
         title: 'Einsätze',
         empty: 'Keine Einsätze vorhanden.',
+        eyebrow: 'Einsatztagebuch',
         createTitle: 'Einsatz anlegen',
         created: 'Einsatz erfolgreich angelegt.',
         strength: 'Stärke',
+        band: 'Zeitband 0—24',
+        bandHint: 'Lage des Einsatzes im Tagesverlauf',
         meta: 'Meta',
-        followUp: 'Nachbereitung:',
+        followUp: 'Nachbereitung',
+        aborted: 'Abgebrochen',
         abortReason: 'Grund bei Abbruch',
-        note: 'Notiz:',
+        note: 'Notiz',
         noteSaved: 'Notiz gespeichert.',
-        abortLabel: 'Abbruchgrund:',
+        abortLabel: 'Abbruchgrund',
         abortSaved: 'Abbruchgrund gespeichert.',
         duration: 'Dauer (Min.)',
         lastCrew: 'Letzte Mannschaft',
         lastCrewEmpty: 'Kein vorheriger Einsatz gefunden.',
+        shortcutHint: 'Tastatur zuerst',
         shortcuts: 'Kürzel: Strg+Enter anlegen · Alt+S Stichwort · Alt+Z Zeit · Alt+M Mitglieder · Alt+G Grund · Alt+N Notiz · Alt+C letzte Mannschaft'
     },
     subjects: {
         title: 'Stichwörter',
+        newSubject: 'Neues Stichwort',
         group: 'Gruppe',
         name: 'Stichwort',
         archived: 'archiviert',
@@ -96,29 +109,38 @@ export default {
         archiveHint: 'Archivierte Stichwörter werden bei der Einsatzerfassung nicht mehr vorgeschlagen, bleiben aber bei bereits erfassten Einsätzen erhalten. Nur nie verwendete Stichwörter lassen sich löschen.'
     },
     exercises: {
+        eyebrow: 'Ausbildung',
+        createTitle: 'Übung anlegen',
         title: 'Übungen',
         empty: 'Keine Übungen vorhanden.',
         created: 'Übung erfolgreich angelegt.'
     },
     youth: {
+        eyebrow: 'Nachwuchs',
+        createTitle: 'Jugendübung anlegen',
         title: 'Jugendübungen',
         empty: 'Keine Jugendübungen vorhanden.',
         created: 'Jugendübung erfolgreich angelegt.'
     },
     members: {
+        eyebrow: 'Mannschaft',
+        newMember: 'Neues Mitglied',
+        status: 'Status',
         title: 'Mitglieder',
         empty: 'Keine Mitglieder gefunden.',
         showRetired: 'Ausgetretene anzeigen:',
         active: 'Aktiv',
         until: 'bis {date}',
-        joined: 'Eintritt:',
+        joined: 'Eintritt',
         joinedUnknown: 'Nicht erfasst',
         setJoined: 'Eintrittsdatum setzen',
         removeJoined: 'Eintrittsdatum entfernen',
-        retired: 'Austritt:',
+        retired: 'Austritt',
         removeRetirement: 'Austritt entfernen',
         retire: 'Austritt eintragen',
         qualifications: {
+            empty: 'Keine Qualifikationen erfasst.',
+            add: 'Qualifikation',
             title: 'Qualifikationen',
             since: 'seit'
         },
@@ -129,12 +151,34 @@ export default {
             shareCalls: 'Anteil Einsätze',
             rank: 'Platz',
             shareHours: 'Anteil Stunden',
-            empty: 'Keine Einsätze in {year}.'
+            empty: 'Keine Einsätze in {year}.',
+            rolling: 'Eigene Anwesenheit ({days}-Tage rollierend)',
+            hourProfile: 'Eigene Alarmzeiten nach Uhrzeit'
         }
     },
     statistics: {
+        eyebrow: 'Auswertung',
         title: 'Statistiken',
         rollingDays: 'Rollierende Tage',
+        groups: {
+            misc: 'Wachbesetzung'
+        },
+        rollingMetric: {
+            label: 'Kurve',
+            count: 'Einsätze',
+            hours: 'Stunden',
+            percent: 'Anteil'
+        },
+        toggleSeries: 'Alle Linien an/aus',
+        table: {
+            title: 'Stunden je Mitglied',
+            name: 'Name',
+            calls: 'Einsätze',
+            exercises: 'Übungen',
+            youth: 'Jugendfeuerwehr',
+            total: 'Gesamt',
+            sum: 'Summe'
+        },
         member: 'Mitglied',
         summary: {
             calls: 'Einsätze',
@@ -145,7 +189,6 @@ export default {
         },
         charts: {
             dailyCalls: 'Einsätze ({days}-Tage rollierend)',
-            memberDailyCalls: '{member} - Einsätze ({days}-Tage rollierend)',
             callGroups: 'Einsätze nach Gruppe',
             monthlyGroups: 'Einsätze pro Monat nach Gruppe',
             memberRanking: 'Mitglieder-Rangliste',
@@ -191,7 +234,25 @@ export default {
             withLeader: 'Mit Führung',
             withDriver: 'Mit Maschinist',
             withBoth: 'Mit beidem',
-            without: 'Ohne'
+            without: 'Ohne',
+            callStrengths: 'Stärke je Einsatz',
+            strength: 'Stärke',
+        band: 'Zeitband 0—24',
+        bandHint: 'Lage des Einsatzes im Tagesverlauf',
+            leader: 'Staffelführer',
+            driver: 'Maschinist',
+            strengthByHour: 'Einsatzstärke nach Uhrzeit',
+            avgStrength: 'Durchschnitt',
+            medianStrength: 'Median',
+            p10Strength: '10-Perzentil',
+            shortage: 'Personalmangel',
+            groupsYearly: 'Stichwortgruppen im Jahresvergleich',
+            memberRolling: 'Anwesenheit je Mitglied ({days}-Tage rollierend)',
+            total: 'Gesamt',
+            percentCalls: 'Anteil Einsätze',
+            percentHours: 'Anteil Stunden',
+            youthRanking: 'Jugendarbeit je Betreuer',
+            ratio: 'Teilnehmer je Betreuer'
         },
         sections: {
             calls: 'Einsätze',
@@ -271,6 +332,7 @@ export default {
         home: 'Zur Startseite'
     },
     theme: {
+        toggle: 'Hell / Dunkel umschalten',
         confirm: 'Bestätigen',
         error: 'Fehler',
         info: 'Info',
@@ -323,6 +385,9 @@ export default {
         statisticsCallGroupsMonthly: 'Monatsstatistik nach Gruppen konnte nicht geladen werden.',
         statisticsYearSummary: 'Jahresübersicht konnte nicht geladen werden.',
         statisticsMemberYearStats: 'Jahresstatistik der Mitglieder konnte nicht geladen werden.',
+        statisticsCallStrengths: 'Einsatzstärken konnten nicht geladen werden.',
+        statisticsStrengthByHour: 'Stärke nach Uhrzeit konnte nicht geladen werden.',
+        statisticsCallGroupsYearly: 'Stichwortgruppen im Jahresvergleich konnten nicht geladen werden.',
         statisticsMemberCalls: 'Einsatz-Historie konnte nicht geladen werden.',
         statisticsYearRange: 'Verfügbarer Zeitraum konnte nicht geladen werden.',
         statisticsYearlySeries: 'Jahresvergleich konnte nicht geladen werden.',

@@ -1,131 +1,200 @@
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow-condensed/600.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
 
-@theme{
-    --color-primary: #ef6c0d;
-    --color-primaryshade: #ba6a28;
-    --color-secondary: #ba6a28;
-    --color-secondaryshade: #9f5a22;
-    --color-accent: #44c2ef;
-    --color-accentshade: #44c2ef;
-    --color-accent-secondary: #2489c8;
-    --color-accent-secondaryshade: #1e74aa;
-    --color-bg: #1e232b;
-    --color-bgmd: #1e3249;
-    --color-bglight: #444;
-    --color-text: #f5f5f5;
-    --color-warning: #f5a623;
-    --color-warningshade: #c3841b;
-    --color-confirm: #17bc45;
-    --color-confirmshade: #129136;
-    --color-error: #ef270d;
-    --color-errorshade: #bd200a;
-    --color-success: #44c2ef;
-    --color-successshade: #3eafd8;
-    --color-info: #2489c8;
-    --color-infoshade: #1e76ae;
-}
-
+/*
+  Two themes over one token set. Light is the register — ink and steel on paper, red kept
+  strictly for signals. Dark is the same structure on steel, where the time bands read better
+  in blue than in ink. Nothing but the --c-* values changes between them.
+*/
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: var(--color-bg);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    --c-page: #f4f6f8;
+    --c-surface: #ffffff;
+    --c-raised: #eef1f4;
+    --c-ink: #10141a;
+    --c-muted: #5c6775;
+    --c-faint: #8a94a2;
+    --c-rule: #dce1e7;
+    --c-hairline: #eef1f4;
+    --c-signal: #d5271b;
+    --c-signal-ink: #a81e15;
+    --c-signal-soft: #fdf5f4;
+    --c-band: #10141a;
+    --c-band-track: #eef1f4;
+    --c-action: #10141a;
+    --c-action-ink: #ffffff;
+    --c-focus: #d5271b;
+    color-scheme: light;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --c-page: #12161c;
+        --c-surface: #1a2027;
+        --c-raised: #212932;
+        --c-ink: #edf0f3;
+        --c-muted: #8892a0;
+        --c-faint: #5c6775;
+        --c-rule: #2a333e;
+        --c-hairline: #212932;
+        --c-signal: #e0331f;
+        --c-signal-ink: #ff6a58;
+        --c-signal-soft: #2a1614;
+        --c-band: #4fa3e3;
+        --c-band-track: #12161c;
+        --c-action: #edf0f3;
+        --c-action-ink: #12161c;
+        --c-focus: #4fa3e3;
+        color-scheme: dark;
+    }
 }
-a:hover {
-  color: #535bf2;
+
+:root[data-theme="dark"] {
+    --c-page: #12161c;
+    --c-surface: #1a2027;
+    --c-raised: #212932;
+    --c-ink: #edf0f3;
+    --c-muted: #8892a0;
+    --c-faint: #5c6775;
+    --c-rule: #2a333e;
+    --c-hairline: #212932;
+    --c-signal: #e0331f;
+    --c-signal-ink: #ff6a58;
+    --c-signal-soft: #2a1614;
+    --c-band: #4fa3e3;
+    --c-band-track: #12161c;
+    --c-action: #edf0f3;
+    --c-action-ink: #12161c;
+    --c-focus: #4fa3e3;
+    color-scheme: dark;
+}
+
+@theme {
+    --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+    --font-condensed: "Barlow Condensed", "Barlow", ui-sans-serif, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+    --color-page: var(--c-page);
+    --color-surface: var(--c-surface);
+    --color-raised: var(--c-raised);
+    --color-ink: var(--c-ink);
+    --color-muted: var(--c-muted);
+    --color-faint: var(--c-faint);
+    --color-rule: var(--c-rule);
+    --color-hairline: var(--c-hairline);
+    --color-signal: var(--c-signal);
+    --color-signal-ink: var(--c-signal-ink);
+    --color-signal-soft: var(--c-signal-soft);
+    --color-band: var(--c-band);
+    --color-band-track: var(--c-band-track);
+    --color-action: var(--c-action);
+    --color-action-ink: var(--c-action-ink);
+    --color-focus: var(--c-focus);
+
+    --radius-card: 4px;
+    --radius-control: 4px;
+}
+
+html {
+    background-color: var(--c-page);
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.92);
-  background-color: #0f1115;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-
-.card {
-  padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0rem;
-  text-align: center;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-
-/* --- Dark theme and orange accent overrides --- */
-:root {
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.92);
-  background-color: #0f1115;
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background-color: var(--c-page);
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 a {
-  color: #f97316; /* orange-500 */
+    color: var(--c-signal-ink);
+    text-decoration: none;
 }
+
 a:hover {
-  color: #fb923c; /* orange-400 */
+    color: var(--c-signal);
 }
 
-button:hover {
-  border-color: #f97316;
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
 }
 
-/* Ensure we stay dark even if system prefers light */
-@media (prefers-color-scheme: light) {
-  :root {
-    color: rgba(255, 255, 255, 0.92);
-    background-color: #0f1115;
-  }
-  a:hover { color: #fb923c; }
-  button { background-color: #1a1a1a; }
+/* Labels and column heads. Condensed and letterspaced so they read as signage, not prose. */
+.label {
+    font-family: var(--font-condensed);
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+
+.eyebrow {
+    font-family: var(--font-condensed);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+}
+
+.headline {
+    font-family: var(--font-condensed);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+}
+
+.tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.card {
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius-card);
+}
+
+.field {
+    height: 38px;
+    width: 100%;
+    background-color: var(--c-surface);
+    border: 1px solid var(--c-rule);
+    border-radius: var(--radius-control);
+    padding: 0 10px;
+    color: var(--c-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+}
+
+.field::placeholder {
+    color: var(--c-faint);
+}
+
+.field:focus {
+    outline: none;
+    border-color: var(--c-focus);
+    box-shadow: 0 0 0 1px var(--c-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }
