@@ -8,8 +8,9 @@ import {addExerciseMembers, createExercise} from "../../api/exercises.ts";
 import {emitSuccess} from "../../events/bus.ts";
 import DatePicker from "../base/datetime/DatePicker.vue";
 import TextInput from "../base/input/TextInput.vue";
-import NumberInput from "../base/input/NumberInput.vue";
+import NumberPicker from "../base/datetime/NumberPicker.vue";
 import {t} from "../../i18n";
+import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
 
 const members = ref<Member[]>([])
 const selectedMembers = ref<Member[]>([])
@@ -52,35 +53,41 @@ watch(() => date.value.toUnixTimestamp(), async (newDate) => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
-    {{ t('common.topic') }}
-    <TextInput v-model="subject"/>
-    <div class="flex gap-2">
-      <div>
-        {{ t('common.date') }}
+  <section class="card p-5 flex flex-col gap-4">
+    <h2 class="headline text-xl">{{ t('exercises.createTitle') }}</h2>
+
+    <div class="flex flex-col gap-2">
+      <span class="label">{{ t('common.topic') }}</span>
+      <TextInput v-model="subject"/>
+    </div>
+
+    <div class="flex flex-wrap items-end gap-6">
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.date') }}</span>
         <DatePicker v-model="date"/>
       </div>
-      <div>
-        {{ t('common.hours') }}
-        <NumberInput v-model="hours"/>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.hours') }}</span>
+        <NumberPicker :min="0" :max="24" v-model="hours"/>
       </div>
-      <div>
-        {{ t('common.minutes') }}
-        <NumberInput v-model="minutes"/>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.minutes') }}</span>
+        <NumberPicker :min="0" :max="59" v-model="minutes"/>
       </div>
+      
     </div>
-    <div v-if="subject">
-      {{ t('common.members') }}
+
+    <div v-if="subject" class="flex flex-col gap-2">
+      <span class="label">{{ t('common.participants') }}</span>
       <ButtonMultiSelect v-model="selectedMembers" :options="members" :value-mapper="(e:Member) => e.name"
                          :key-mapper="(e:Member) => e.id"/>
     </div>
 
-    <button @click="submit" :disabled="!canSubmit" class="bg-green-500 text-white p-2 disabled:opacity-50 disabled:cursor-not-allowed">{{ t('common.create') }}</button>
-  </div>
-
-
+    <div>
+      <ConfirmButton :disabled="!canSubmit" @click="submit">
+        <font-awesome-icon icon="fa-solid fa-plus"/>
+        {{ t('common.create') }}
+      </ConfirmButton>
+    </div>
+  </section>
 </template>
-
-<style scoped>
-
-</style>

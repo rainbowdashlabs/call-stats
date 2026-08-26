@@ -18,17 +18,35 @@ async function edit() {
 </script>
 
 <template>
-  <div class="grid grid-cols-6 py-1 hover:bg-gray-800 rounded cursor-pointer" @click="edit">
-    <div>{{ member.id }}</div>
-    <div class="col-span-3">{{ member.name }}</div>
-    <div>
-      <span v-if="member.retired">{{ t('members.until', { date: formatDate(member.retired!) }) }}</span>
-      <span v-else>{{ t('members.active') }}</span>
-    </div>
-    <div>✏️</div>
+  <div class="member-row" @click="edit" role="button" tabindex="0" @keydown.enter="edit">
+    <span class="tabular text-sm text-muted">{{ member.id }}</span>
+    <span class="truncate font-medium">{{ member.name }}</span>
+    <span class="text-right">
+      <span v-if="member.retired" class="label">{{ t('members.until', {date: formatDate(member.retired!)}) }}</span>
+      <span v-else class="label" style="color: var(--c-ink)">{{ t('members.active') }}</span>
+    </span>
   </div>
 </template>
 
 <style scoped>
+.member-row {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 110px;
+  gap: 10px;
+  align-items: center;
+  padding: 11px 18px;
+  border-top: 1px solid var(--c-hairline);
+  cursor: pointer;
+}
 
+.member-row:hover {
+  background: var(--c-hairline);
+}
+
+@media (min-width: 700px) {
+  .member-row, .member-head {
+    grid-template-columns: 64px minmax(0, 1fr) 200px;
+    gap: 16px;
+  }
+}
 </style>

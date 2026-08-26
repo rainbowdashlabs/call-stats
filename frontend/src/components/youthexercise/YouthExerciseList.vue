@@ -42,38 +42,57 @@ defineExpose({load})
 </script>
 
 <template>
-  <div class="mt-4">
-    <div class="flex justify-between items-center mb-2">
-      <div class="text-2xl">{{ t('youth.title') }}</div>
-      <div class="flex items-center gap-2">
-        <span>{{ t('common.perPage') }}</span>
-        <select v-model="pageSize">
+  <section class="card">
+    <div class="flex items-baseline justify-between px-5 pt-4 pb-3 border-b border-rule">
+      <h2 class="headline text-xl">{{ t('youth.title') }}</h2>
+      <label class="flex items-center gap-2">
+        <span class="label">{{ t('common.perPage') }}</span>
+        <select v-model="pageSize" class="field tabular" style="height: 30px; width: auto; padding: 0 6px;">
           <option v-for="i in [5, 10, 20, 50]" :value="i">{{ i }}</option>
         </select>
-      </div>
+      </label>
     </div>
 
-    <Navigation :pages="pages" v-model="page"/>
-
-    <div class="border-2 rounded-2xl border-accent grid grid-cols-1 gap-2 p-2 mt-2 mb-2">
-      <div class="grid grid-cols-5 gap-2 highlight rounded-2xl font-bold">
-        <div>{{ t('common.topic') }}</div>
-        <div>{{ t('common.date') }}</div>
-        <div>{{ t('common.duration') }}</div>
-        <div>{{ t('common.participants') }}</div>
-        <div>{{ t('common.instructors') }}</div>
-      </div>
-      <div v-if="loading" class="text-center p-4">{{ t('common.loading') }}</div>
-      <div v-else-if="entries.length === 0" class="text-center p-4">{{ t('youth.empty') }}</div>
-      <div v-else v-for="exercise in entries" class="grid grid-cols-5 gap-2 rounded-2xl">
-        <div>{{ exercise.subject }}</div>
-        <div>{{ formatDate(exercise.exercise_date) }}</div>
-        <div>{{ formatDuration(exercise.duration) }}</div>
-        <div>{{ exercise.participants }}</div>
-        <div>{{ exercise.instructors.map(m => m.name).join(', ') }}</div>
-      </div>
+    <div class="list-head">
+      <span class="label">{{ t('common.topic') }}</span>
+      <span class="label">{{ t('common.date') }}</span>
+      <span class="label text-right">{{ t('common.duration') }}</span>
+      <span class="label text-right">{{ t('common.participants') }}</span>
+      <span class="label text-right">{{ t('common.instructors') }}</span>
     </div>
 
-    <Navigation :pages="pages" v-model="page"/>
-  </div>
+    <div v-if="loading" class="p-8 text-center text-muted">{{ t('common.loading') }}</div>
+    <div v-else-if="entries.length === 0" class="p-8 text-center text-muted">{{ t('youth.empty') }}</div>
+    <div v-else v-for="exercise in entries" :key="exercise.id" class="list-row">
+      <span class="truncate font-medium">{{ exercise.subject }}</span>
+      <span class="tabular text-sm">{{ formatDate(exercise.exercise_date) }}</span>
+      <span class="tabular text-sm text-right">{{ formatDuration(exercise.duration) }}</span>
+      <span class="tabular text-sm text-right">{{ exercise.participants }}</span>
+      <span class="tabular text-sm text-right">{{ exercise.instructors.length }}</span>
+    </div>
+
+    <div class="px-5 py-3 border-t border-rule">
+      <Navigation :pages="pages" v-model="page"/>
+    </div>
+  </section>
 </template>
+
+<style scoped>
+.list-head, .list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 80px 84px 84px;
+  gap: 16px;
+  padding: 11px 18px;
+  align-items: center;
+}
+
+.list-head {
+  background: var(--c-raised);
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.list-row {
+  border-top: 1px solid var(--c-hairline);
+}
+</style>

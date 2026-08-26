@@ -59,27 +59,49 @@ onMounted(load)
 </script>
 
 <template>
-  <div>
-    <div>{{ t('members.qualifications.title') }}</div>
-    <div v-if="loading" class="p-2">{{ t('common.loading') }}</div>
-    <div v-for="qualification in member_qualifications" class="flex gap-2">
-      {{ qualificationName(qualification) }} {{ t('members.qualifications.since') }} {{ qualification.since }}
-      <SimpleButton @click="remove(qualification)">🗑️</SimpleButton>
+  <section class="card p-5 flex flex-col gap-4">
+    <span class="label">{{ t('members.qualifications.title') }}</span>
+
+    <div v-if="loading" class="text-muted">{{ t('common.loading') }}</div>
+    <div v-else-if="member_qualifications.length === 0" class="text-muted text-sm">
+      {{ t('members.qualifications.empty') }}
+    </div>
+    <div v-else class="flex flex-wrap gap-2">
+      <span v-for="qualification in member_qualifications" :key="qualification.qualification_id" class="qual">
+        <span class="font-condensed font-semibold tracking-wide uppercase text-sm">
+          {{ qualificationName(qualification) }}
+        </span>
+        <span class="tabular text-xs text-muted">{{ qualification.since }}</span>
+        <SimpleButton @click="remove(qualification)" :aria-label="t('common.delete')">
+          <font-awesome-icon icon="fa-solid fa-xmark"/>
+        </SimpleButton>
+      </span>
     </div>
 
-    <div v-if="qualifications.length > 0" class="flex gap-2">
-      <SmartSelect class="grow"
-                   v-model="selected_qualification"
-                   :key-mapper="(v) => v.id!"
-                   :value-mapper="(v) => v.name"
-                   :options="qualifications"
-                   strict/>
-      <DatePicker v-model="selected_date"/>
+    <div v-if="qualifications.length > 0" class="flex flex-wrap items-end gap-3 pt-1">
+      <div class="flex flex-col gap-2 grow" style="min-width: 14rem">
+        <span class="label">{{ t('members.qualifications.add') }}</span>
+        <SmartSelect v-model="selected_qualification" :key-mapper="(v) => v.id!" :value-mapper="(v) => v.name"
+                     :options="qualifications" strict/>
+      </div>
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('members.qualifications.since') }}</span>
+        <DatePicker v-model="selected_date"/>
+      </div>
       <ConfirmButton @click="add">{{ t('common.add') }}</ConfirmButton>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>
-
+.qual {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 6px 0 10px;
+  border: 1px solid var(--c-rule);
+  border-radius: 3px;
+  background: var(--c-raised);
+}
 </style>

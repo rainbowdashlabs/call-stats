@@ -5,6 +5,7 @@ import {listSubjects} from "../../api/subjects.ts";
 import type {MultiSelectGroup} from "../../interfaces/Subject.ts";
 import TextInput from "../base/input/TextInput.vue";
 import {t} from "../../i18n";
+import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
 
 const emit = defineEmits(['create'])
 
@@ -28,10 +29,16 @@ function create() {
 </script>
 
 <template>
-  <div class="grid grid-cols-3 gap-2">
-    <SmartSelect :options="groups" :value-mapper="(v) => v" :key-mapper="(k) => k"
-                 :generator="(v:string) => v" v-model="group" :placeholder="t('subjects.group')"/>
-    <TextInput v-model="name" :placeholder="t('subjects.name')"/>
-    <button @click="create">{{ t('common.create') }}</button>
+  <div class="flex flex-col gap-3">
+    <span class="label">{{ t('subjects.newSubject') }}</span>
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3">
+      <SmartSelect :options="groups" :value-mapper="(v) => v" :key-mapper="(k) => k"
+                   :generator="(v:string) => v" v-model="group" :placeholder="t('subjects.group')"/>
+      <TextInput v-model="name" :placeholder="t('subjects.name')"/>
+      <ConfirmButton :disabled="!group || !name" @click="create">
+        <font-awesome-icon icon="fa-solid fa-plus"/>
+        {{ t('common.create') }}
+      </ConfirmButton>
+    </div>
   </div>
 </template>

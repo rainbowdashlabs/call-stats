@@ -3,6 +3,7 @@ import {type PropType, ref} from "vue";
 import type {MultiSelectItem} from "../../interfaces/Subject.ts";
 import {deleteSubject, updateSubject} from "../../api/subjects.ts";
 import {t} from "../../i18n";
+import SimpleButton from "../base/buttons/SimpleButton.vue";
 
 const props = defineProps({
   group: {
@@ -63,25 +64,52 @@ function handleKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <div v-if="renaming" class="flex gap-2 bg-yellow-500 px-2 py-1 rounded">
-    <input class="grow bg-transparent" type="text" v-model="editLabel" @keydown="handleKeydown"/>
-    <div class="flex gap-2">
-      <div @click="rename" class="cursor-pointer">✔️</div>
-      <div @click="cancelRename" class="cursor-pointer">❌</div>
+  <div v-if="renaming" class="subject-row">
+    <input class="field" type="text" v-model="editLabel" @keydown="handleKeydown"/>
+    <div class="flex gap-1">
+      <SimpleButton @click="rename" :aria-label="t('common.save')">
+        <font-awesome-icon icon="fa-solid fa-check"/>
+      </SimpleButton>
+      <SimpleButton @click="cancelRename" :aria-label="t('common.cancel')">
+        <font-awesome-icon icon="fa-solid fa-xmark"/>
+      </SimpleButton>
     </div>
   </div>
-  <div v-else class="flex gap-2 justify-center px-2 py-1" :class="subject.archived ? 'opacity-50' : ''">
-    <div class="grow">
-      {{ subject.label }}
-      <span v-if="subject.archived" class="text-xs text-gray-400">({{ t('subjects.archived') }})</span>
+  <div v-else class="subject-row" :class="{archived: subject.archived}">
+    <div class="min-w-0">
+      <div class="truncate">{{ subject.label }}</div>
+      <span v-if="subject.archived" class="label">{{ t('subjects.archived') }}</span>
     </div>
-    <div class="flex gap-2">
-      <div @click="toggleArchived" class="cursor-pointer"
-           :title="subject.archived ? t('subjects.restore') : t('subjects.archive')">
-        {{ subject.archived ? '♻️' : '📦' }}
-      </div>
-      <div @click="remove" class="cursor-pointer" :title="t('common.delete')">🗑️</div>
-      <div @click="startRename" class="cursor-pointer" :title="t('subjects.rename')">✏️</div>
+    <div class="flex gap-1 shrink-0">
+      <SimpleButton @click="toggleArchived"
+                    :aria-label="subject.archived ? t('subjects.restore') : t('subjects.archive')">
+        <font-awesome-icon :icon="subject.archived ? 'fa-solid fa-rotate-left' : 'fa-solid fa-box-archive'"/>
+      </SimpleButton>
+      <SimpleButton @click="startRename" :aria-label="t('subjects.rename')">
+        <font-awesome-icon icon="fa-solid fa-pen"/>
+      </SimpleButton>
+      <SimpleButton class="danger" @click="remove" :aria-label="t('common.delete')">
+        <font-awesome-icon icon="fa-solid fa-trash"/>
+      </SimpleButton>
     </div>
   </div>
 </template>
+
+<style scoped>
+.subject-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 16px;
+  border-top: 1px solid var(--c-hairline);
+}
+
+.subject-row.archived {
+  color: var(--c-muted);
+}
+
+.danger:hover {
+  color: var(--c-signal);
+}
+</style>

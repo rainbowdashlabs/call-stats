@@ -18,12 +18,8 @@ defineEmits<{
 </script>
 
 <template>
-
-  <SubjectGroup v-for="item in subject_groups" :key="item.label" :group="item"
-                @removed="id => $emit('removed', id)"/>
-
+  <div class="flex flex-col gap-4">
+    <SubjectGroup v-for="item in subject_groups" :key="item.label" :group="item"
+                  @removed="id => $emit('removed', id)"/>
+  </div>
 </template>
-
-<style scoped>
-
-</style>

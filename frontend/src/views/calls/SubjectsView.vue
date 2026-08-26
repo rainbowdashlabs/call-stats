@@ -49,29 +49,25 @@ onMounted(load)
 </script>
 
 <template>
-  <SubjectForm @create="handleCreate"/>
-  <label class="flex items-center gap-2 my-2 text-sm text-gray-400">
-    <input type="checkbox" v-model="showArchived"/>
-    {{ t('subjects.showArchived') }}
-  </label>
-  <div v-if="loading" class="p-2">{{ t('common.loading') }}</div>
-  <div v-else-if="error" class="p-2 text-red-400">{{ error }}</div>
-  <SubjectList v-else :subject_groups="subjects" @removed="load"/>
-  <p class="text-xs text-gray-500 mt-4">{{ t('subjects.archiveHint') }}</p>
+  <section class="flex flex-col gap-6">
+    <header>
+      <div class="eyebrow">{{ t('calls.eyebrow') }}</div>
+      <h1 class="headline text-4xl mt-1">{{ t('subjects.title') }}</h1>
+    </header>
+
+    <div class="card p-5">
+      <SubjectForm @create="handleCreate"/>
+    </div>
+
+    <label class="flex items-center gap-2 w-fit cursor-pointer">
+      <input type="checkbox" v-model="showArchived"/>
+      <span class="label">{{ t('subjects.showArchived') }}</span>
+    </label>
+
+    <div v-if="loading" class="p-8 text-center text-muted">{{ t('common.loading') }}</div>
+    <div v-else-if="error" class="p-8 text-center" style="color: var(--c-signal-ink)">{{ error }}</div>
+    <SubjectList v-else :subject_groups="subjects" @removed="load"/>
+
+    <p class="text-xs text-muted max-w-prose">{{ t('subjects.archiveHint') }}</p>
+  </section>
 </template>
-
-<style scoped>
-.subjects-view {
-  display: grid;
-  gap: 1rem;
-}
-
-header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.error {
-  color: #b91c1c;
-}
-</style>
