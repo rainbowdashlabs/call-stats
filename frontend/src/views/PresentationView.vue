@@ -569,61 +569,104 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-gray-950 text-gray-50 flex flex-col z-50">
+  <div class="fixed inset-0 flex flex-col z-50" style="background: #0b0f14; color: #edf0f3">
     <div v-if="loading" class="flex-1 flex items-center justify-center text-3xl">{{ t('common.loading') }}</div>
 
     <template v-else-if="slide">
-      <div class="flex items-center justify-between px-8 pt-6 text-lg text-gray-400">
+      <div class="flex items-center justify-between px-8 pt-6 text-lg" style="color: #8892a0">
         <span>{{ slide.section }}</span>
         <div class="flex items-center gap-4">
           <span v-if="auto">{{ t('presentation.autoOn') }}</span>
           <span>{{ index + 1 }} / {{ slides.length }}</span>
-          <button @click="leave" class="bg-gray-800 px-3 py-1 rounded text-sm">{{ t('presentation.exit') }}</button>
+          <button @click="leave" class="deck-button">{{ t('presentation.exit') }}</button>
         </div>
       </div>
 
       <div class="flex-1 flex flex-col items-center justify-center px-10 min-h-0">
         <template v-if="slide.tiles">
-          <h1 class="text-6xl font-bold mb-14 text-center">{{ slide.heading }}</h1>
+          <h1 class="headline text-6xl mb-14 text-center">{{ slide.heading }}</h1>
           <div class="flex flex-wrap justify-center gap-10">
             <div v-for="tile in slide.tiles" :key="tile.label"
-                 class="bg-gray-900 rounded-2xl px-12 py-10 text-center min-w-56">
-              <div class="text-7xl font-bold text-orange-400">{{ tile.value }}</div>
-              <div class="text-2xl text-gray-400 mt-4">{{ tile.label }}</div>
+                 class="deck-tile">
+              <div class="headline text-7xl tabular">{{ tile.value }}</div>
+              <div class="text-2xl mt-4" style="color: #8892a0">{{ tile.label }}</div>
             </div>
           </div>
         </template>
 
         <template v-else-if="slide.closing">
-          <h1 class="text-6xl font-bold mb-14 text-center">{{ slide.heading }}</h1>
-          <p class="text-4xl text-center text-gray-300 max-w-5xl leading-relaxed">{{ slide.closing }}</p>
+          <h1 class="headline text-6xl mb-14 text-center">{{ slide.heading }}</h1>
+          <p class="text-4xl text-center max-w-5xl leading-relaxed" style="color: #cbd5e1">{{ slide.closing }}</p>
         </template>
 
         <VChart v-else-if="slide.option" :key="index" :option="slide.option" class="w-full h-full" autoresize/>
       </div>
 
       <div class="px-8 pb-5">
-        <div class="h-1 bg-gray-800 rounded">
-          <div class="h-1 bg-orange-500 rounded transition-all"
+        <div class="h-1 rounded" style="background: #212932">
+          <div class="h-1 bg-signal rounded transition-all"
                :style="{width: `${(index + 1) / slides.length * 100}%`}"/>
         </div>
-        <div class="text-center text-sm text-gray-600 mt-3">{{ t('presentation.hint') }}</div>
+        <div class="text-center text-sm mt-3" style="color: #5c6775">{{ t('presentation.hint') }}</div>
       </div>
 
-      <div v-if="showOverview" class="absolute inset-0 bg-gray-950/95 overflow-y-auto p-10">
+      <div v-if="showOverview" class="absolute inset-0 bg-[#0b0f14]/95 overflow-y-auto p-10">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <button v-for="(s, i) in slides" :key="i" @click="jump(i)"
-                  class="text-left bg-gray-900 rounded-lg p-4 hover:bg-gray-800"
-                  :class="i === index ? 'ring-2 ring-orange-500' : ''">
-            <div class="text-xs text-gray-500">{{ i + 1 }} · {{ s.section }}</div>
+                  class="deck-card"
+                  :class="i === index ? 'deck-card-current' : ''">
+            <div class="text-xs" style="color: #8892a0">{{ i + 1 }} · {{ s.section }}</div>
             <div class="text-lg mt-1">{{ s.heading }}</div>
           </button>
         </div>
       </div>
     </template>
 
-    <div v-else class="flex-1 flex items-center justify-center text-3xl text-gray-400">
+    <div v-else class="flex-1 flex items-center justify-center text-3xl" style="color: #8892a0">
       {{ t('statistics.noData', {year}) }}
     </div>
   </div>
 </template>
+
+<style scoped>
+.deck-button {
+  padding: 5px 13px;
+  border: 1px solid #2a333e;
+  border-radius: 3px;
+  background: #1a2027;
+  color: #edf0f3;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.deck-button:hover {
+  background: #212932;
+}
+
+.deck-tile {
+  min-width: 14rem;
+  padding: 40px 48px;
+  text-align: center;
+  background: #151b22;
+  border: 1px solid #212932;
+  border-radius: 6px;
+}
+
+.deck-card {
+  text-align: left;
+  padding: 16px;
+  background: #151b22;
+  border: 1px solid #212932;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #edf0f3;
+}
+
+.deck-card:hover {
+  background: #1a2027;
+}
+
+.deck-card-current {
+  border-color: #e0331f;
+}
+</style>

@@ -35,6 +35,9 @@ import {
   getYouthSessions,
   getCombinedMemberStats,
   getMembership,
+  getCallStrengths,
+  getStrengthByHour,
+  getCallGroupsYearly,
   type DailyCallCount,
   type MemberDailyStats,
   type CallGroupCount,
@@ -54,12 +57,16 @@ import {
   type YouthSummary,
   type YouthSession,
   type CombinedMemberStats,
-  type MembershipEntry
+  type MembershipEntry,
+  type CallStrength,
+  type StrengthByHour,
+  type CallGroupYearCount
 } from "../api/statistics.ts";
 import {listMembers} from "../api/members.ts";
 import type {Member} from "../interfaces/Member.ts";
 import {t} from "../i18n";
 import router from "../router";
+import StandardButton from "../components/base/buttons/StandardButton.vue";
 import {
   categoryAxis,
   chartBase,
@@ -71,8 +78,13 @@ import {
   timeProfileGrid,
   valueAxis,
   zoom,
-  SERIES_COLORS
+  SERIES_COLORS,
+  groupColor,
+  groupLabel,
+  abortReasonLabel,
+  isShortageReason
 } from "../scripts/charts.ts";
+import {formatDayTime} from "../scripts/datetime.ts";
 
 use([
   CanvasRenderer,
@@ -120,6 +132,11 @@ const youthSummary = ref<YouthSummary | null>(null)
 const youthSessions = ref<YouthSession[]>([])
 const combined = ref<CombinedMemberStats[]>([])
 const membership = ref<MembershipEntry[]>([])
+const callStrengths = ref<CallStrength[]>([])
+const strengthByHour = ref<StrengthByHour[]>([])
+const groupsYearly = ref<CallGroupYearCount[]>([])
+const rollingMetric = ref<'count' | 'hours' | 'percent'>('count')
+const seriesVisible = ref(true)
 const loading = ref(false)
 
 const startDate = ref('')
@@ -136,7 +153,8 @@ async function loadStats() {
   loading.value = true
   const year = selectedYear.value
   try {
-    const [dc, cg, cgm, ys, mys, series, tp, subj, dur, abort, cov, to, es, esess, emem, yos, yosess, comb, mem] =
+    const [dc, cg, cgm, ys, mys, series, tp, subj, dur, abort, cov, to, es, esess, emem, yos, yosess, comb, mem,
+           mdc, strengths, byHour, groupYears] =
         await Promise.all([
           getDailyCalls(year, rollingDays.value),
           getCallGroups(year),
@@ -156,7 +174,11 @@ async function loadStats() {
           getYouthSummary(year),
           getYouthSessions(year),
           getCombinedMemberStats(year),
-          getMembership(year, yearsBack.value)
+          getMembership(year, yearsBack.value),
+          getMemberDailyCalls(year, rollingDays.value),
+          getCallStrengths(year),
+          getStrengthByHour(year),
+          getCallGroupsYearly(year, yearsBack.value)
         ])
     dailyCalls.value = dc
     callGroups.value = cg
@@ -177,21 +199,17 @@ async function loadStats() {
     youthSessions.value = yosess
     combined.value = comb
     membership.value = mem
-    await loadMemberStats()
+    memberDailyCalls.value = mdc
+    callStrengths.value = strengths
+    strengthByHour.value = byHour
+    groupsYearly.value = groupYears
   } finally {
     loading.value = false
   }
 }
 
-async function loadMemberStats() {
-  memberDailyCalls.value = selectedMember.value
-      ? await getMemberDailyCalls(selectedYear.value, rollingDays.value, selectedMember.value)
-      : []
-}
-
 watch([selectedYear, yearsBack], () => loadStats())
 watch(rollingDays, () => loadStats())
-watch(selectedMember, () => loadMemberStats())
 
 onMounted(async () => {
   members.value = await listMembers(false)
@@ -254,22 +272,154 @@ const dailyCallsChartOption = computed(() => ({
   dataZoom: zoom(theme)
 }))
 
-const memberDailyChartOption = computed(() => {
-  if (!filteredMemberDailyCalls.value.length) return null
+function rollingValue(row: MemberDailyStats): number {
+  if (rollingMetric.value === 'hours') return row.call_hours
+  if (rollingMetric.value === 'percent') return row.call_count_percentage
+  return row.call_count
+}
+
+const rollingSeries = computed(() => {
+  const rows = filteredMemberDailyCalls.value
+      .filter(d => !selectedMember.value || d.name === selectedMember.value)
+  const days = [...new Set(rows.map(d => d.day))].sort()
+  const names = [...new Set(rows.map(d => d.name))].sort()
+  const values = new Map<string, Map<string, number>>()
+  for (const row of rows) {
+    if (!values.has(row.name)) values.set(row.name, new Map())
+    values.get(row.name)!.set(row.day, rollingValue(row))
+  }
+  return {days, names, values}
+})
+
+/** Drives the button that switches every member line off and on again at once. */
+const legendSelection = computed(() =>
+    Object.fromEntries(rollingSeries.value.names.map(name => [name, seriesVisible.value])))
+
+const memberRollingOption = computed(() => {
+  const {days, names, values} = rollingSeries.value
+  if (!days.length) return null
+  const percent = rollingMetric.value === 'percent'
+  const series: object[] = names.map(name => ({
+    name,
+    type: 'line',
+    smooth: true,
+    showSymbol: false,
+    emphasis: {focus: 'series'},
+    lineStyle: {width: 1.5, opacity: 0.75},
+    data: days.map(day => values.get(name)?.get(day) ?? 0)
+  }))
+  if (!percent) {
+    const totals = new Map(filteredDailyCalls.value.map(d =>
+        [d.day, (rollingMetric.value === 'hours' ? d.call_hours : d.call_count) ?? 0]))
+    series.push({
+      name: t('statistics.charts.total'),
+      type: 'line',
+      smooth: true,
+      showSymbol: false,
+      z: 5,
+      lineStyle: {type: 'dashed', width: theme.lineWidth + 1},
+      itemStyle: {color: '#f87171'},
+      data: days.map(day => totals.get(day) ?? 0)
+    })
+  }
   return {
     ...chartBase(theme),
-    title: title(t('statistics.charts.memberDailyCalls', {member: selectedMember.value, days: rollingDays.value}), theme),
-    tooltip: tooltip(theme),
-    xAxis: categoryAxis(filteredMemberDailyCalls.value.map(d => d.day), theme),
-    yAxis: [valueAxis(t('statistics.charts.count'), theme), valueAxis('%', theme, {max: 100})],
-    series: [
-      {name: t('statistics.charts.ownCalls'), type: 'line', data: filteredMemberDailyCalls.value.map(d => d.call_count), smooth: true},
-      {name: t('statistics.charts.totalCalls'), type: 'line', data: filteredMemberDailyCalls.value.map(d => d.call_count_total), smooth: true},
-      {name: t('statistics.charts.share'), type: 'line', yAxisIndex: 1, data: filteredMemberDailyCalls.value.map(d => d.call_count_percentage), smooth: true}
-    ],
-    legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '10%', top: 90},
+    title: title(t('statistics.charts.memberRolling', {days: rollingDays.value}), theme),
+    tooltip: {...tooltip(theme), order: 'valueDesc'},
+    xAxis: categoryAxis(days, theme),
+    yAxis: valueAxis(percent ? '%' : t(`statistics.charts.${rollingMetric.value === 'hours' ? 'hours' : 'count'}`),
+        theme, percent ? {max: 100} : {}),
+    series,
+    legend: legend(theme, {top: 30, type: 'scroll', selected: legendSelection.value}),
+    grid: {left: '10%', right: '5%', top: 110, bottom: 60},
     dataZoom: zoom(theme)
+  }
+})
+
+/** Stärke je Einsatz, eingefärbt danach, ob Führung und Maschinist dabei waren (Grafana 22). */
+const callStrengthsOption = computed(() => {
+  const rows = callStrengths.value
+  if (!rows.length) return null
+  const barColor = (row: CallStrength) => row.leader > 0 && row.driver > 0 ? '#22c55e'
+      : row.leader > 0 || row.driver > 0 ? '#f59e0b' : '#ef4444'
+  const mark = (value: number) => value > 0 ? '✔' : '—'
+  return {
+    ...chartBase(theme),
+    title: title(t('statistics.charts.callStrengths'), theme),
+    tooltip: {
+      ...tooltip(theme, 'item'),
+      formatter: (params: {dataIndex: number, name: string}) => {
+        const row = rows[params.dataIndex]!
+        return `${params.name}<br/>${t('statistics.charts.strength')}: ${row.strength}`
+            + `<br/>${t('statistics.charts.leader')}: ${mark(row.leader)}`
+            + `<br/>${t('statistics.charts.driver')}: ${mark(row.driver)}`
+      }
+    },
+    xAxis: categoryAxis(rows.map(r => formatDayTime(r.start)), theme, 45),
+    yAxis: valueAxis(t('statistics.charts.strength'), theme),
+    series: [{
+      name: t('statistics.charts.strength'),
+      type: 'bar',
+      data: rows.map(r => ({value: r.strength, itemStyle: {color: barColor(r)}}))
+    }],
+    grid: {left: '10%', right: '5%', top: 70, bottom: 80},
+    dataZoom: zoom(theme)
+  }
+})
+
+/** Wie stark die Wehr zu welcher Tageszeit ausrückt (Grafana 45). */
+const strengthByHourOption = computed(() => ({
+  ...chartBase(theme),
+  title: title(t('statistics.charts.strengthByHour'), theme),
+  tooltip: tooltip(theme),
+  xAxis: categoryAxis(strengthByHour.value.map(h => `${String(h.hour).padStart(2, '0')}:00`), theme),
+  yAxis: valueAxis(t('statistics.charts.strength'), theme, {min: 0}),
+  series: [
+    {name: t('statistics.charts.avgStrength'), type: 'line', smooth: true, data: strengthByHour.value.map(h => h.avg_strength)},
+    {name: t('statistics.charts.medianStrength'), type: 'line', smooth: true, data: strengthByHour.value.map(h => h.median_strength)},
+    {name: t('statistics.charts.p10Strength'), type: 'line', smooth: true, data: strengthByHour.value.map(h => h.p10_strength)}
+  ],
+  legend: legend(theme, {top: 30}),
+  grid: {left: '10%', right: '5%', top: 90}
+}))
+
+/** Abbrüche, bei denen Personal oder Gerät gefehlt hat (Grafana 23). */
+const shortageOption = computed(() => {
+  const shortages = abortReasons.value.filter(r => isShortageReason(r.reason))
+  if (!shortages.length) return null
+  return {
+    ...chartBase(theme),
+    title: title(t('statistics.charts.shortage'), theme),
+    tooltip: tooltip(theme, 'item'),
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      data: shortages.map(r => ({name: abortReasonLabel(r.reason), value: r.call_count})),
+      label: {color: theme.muted, fontSize: theme.fontSize}
+    }],
+    legend: legend(theme, {orient: 'vertical', right: 10, top: 'center'})
+  }
+})
+
+/** Stichwortgruppen über mehrere Jahre (Grafana 47). */
+const groupsYearlyOption = computed(() => {
+  const years = [...new Set(groupsYearly.value.map(e => e.year))].sort()
+  const groups = [...new Set(groupsYearly.value.map(e => e.group))].sort()
+  return {
+    ...chartBase(theme),
+    title: title(t('statistics.charts.groupsYearly'), theme),
+    tooltip: tooltip(theme),
+    xAxis: categoryAxis(years, theme),
+    yAxis: valueAxis(t('statistics.charts.count'), theme),
+    series: groups.map(group => ({
+      name: groupLabel(group),
+      type: 'line',
+      smooth: true,
+      itemStyle: {color: groupColor(group)},
+      data: years.map(year => groupsYearly.value.find(e => e.year === year && e.group === group)?.call_count ?? 0)
+    })),
+    legend: legend(theme, {top: 30}),
+    grid: {left: '10%', right: '5%', top: 90}
   }
 })
 
@@ -280,11 +430,32 @@ const callGroupsPieOption = computed(() => ({
   series: [{
     type: 'pie',
     radius: ['40%', '70%'],
-    data: callGroups.value.map(g => ({name: g.group, value: g.call_count})),
+    data: callGroups.value.map(g => ({
+      name: groupLabel(g.group),
+      value: g.call_count,
+      itemStyle: {color: groupColor(g.group)}
+    })),
     label: {color: theme.muted, fontSize: theme.fontSize}
   }],
   legend: legend(theme, {orient: 'vertical', right: 10, top: 'center'})
 }))
+
+const callGroupsBarOption = computed(() => {
+  const sorted = [...callGroups.value].sort((a, b) => b.call_count - a.call_count)
+  return {
+    ...chartBase(theme),
+    title: title(t('statistics.charts.callGroups'), theme),
+    tooltip: tooltip(theme),
+    xAxis: categoryAxis(sorted.map(g => groupLabel(g.group)), theme),
+    yAxis: valueAxis(t('statistics.charts.count'), theme),
+    series: [{
+      type: 'bar',
+      data: sorted.map(g => ({value: g.call_count, itemStyle: {color: groupColor(g.group)}})),
+      label: {show: true, position: 'top', color: theme.muted, fontSize: theme.fontSize}
+    }],
+    grid: {left: '10%', right: '5%', top: 70}
+  }
+})
 
 const monthlyGroupsChartOption = computed(() => {
   const groups = [...new Set(callGroupsMonthly.value.map(d => d.group))]
@@ -296,9 +467,10 @@ const monthlyGroupsChartOption = computed(() => {
     xAxis: categoryAxis(months.map(m => m.substring(0, 7)), theme),
     yAxis: valueAxis(t('statistics.charts.count'), theme),
     series: groups.map(group => ({
-      name: group,
+      name: groupLabel(group),
       type: 'bar',
       stack: 'total',
+      itemStyle: {color: groupColor(group)},
       data: months.map(m => callGroupsMonthly.value.find(d => d.month === m && d.group === group)?.call_count ?? 0)
     })),
     legend: legend(theme, {top: 30}),
@@ -314,13 +486,21 @@ const memberRankingChartOption = computed(() => {
     title: title(t('statistics.charts.memberRanking'), theme),
     tooltip: tooltip(theme),
     xAxis: categoryAxis(sorted.map(m => m.member_name), theme, 45),
-    yAxis: [valueAxis(t('statistics.charts.calls'), theme), valueAxis(t('statistics.charts.hours'), theme)],
+    yAxis: [
+      valueAxis(t('statistics.charts.calls'), theme),
+      valueAxis(t('statistics.charts.hours'), theme),
+      valueAxis('%', theme, {max: 100, position: 'right', offset: 55, splitLine: {show: false}})
+    ],
     series: [
       {name: t('statistics.charts.calls'), type: 'bar', data: sorted.map(m => m.call_count)},
-      {name: t('statistics.charts.hours'), type: 'bar', yAxisIndex: 1, data: sorted.map(m => m.call_hours)}
+      {name: t('statistics.charts.hours'), type: 'bar', yAxisIndex: 1, data: sorted.map(m => m.call_hours)},
+      {name: t('statistics.charts.percentCalls'), type: 'line', yAxisIndex: 2, symbolSize: theme.symbolSize,
+        data: sorted.map(m => m.call_count_perc)},
+      {name: t('statistics.charts.percentHours'), type: 'line', yAxisIndex: 2, symbolSize: theme.symbolSize,
+        data: sorted.map(m => m.call_hours_perc)}
     ],
     legend: legend(theme, {top: 30}),
-    grid: {left: '10%', right: '10%', bottom: '20%', top: 90},
+    grid: {left: '10%', right: '14%', bottom: '20%', top: 90},
     dataZoom: zoom(theme)
   }
 })
@@ -434,7 +614,7 @@ const abortReasonsOption = computed(() => {
     series: [{
       type: 'pie',
       radius: ['40%', '70%'],
-      data: abortReasons.value.map(r => ({name: r.reason, value: r.call_count})),
+      data: abortReasons.value.map(r => ({name: abortReasonLabel(r.reason), value: r.call_count})),
       label: {color: theme.muted, fontSize: theme.fontSize}
     }],
     legend: legend(theme, {orient: 'vertical', right: 10, top: 'center'})
@@ -518,10 +698,17 @@ const youthSessionsOption = computed(() => ({
   title: title(t('statistics.charts.youthSessions'), theme),
   tooltip: tooltip(theme),
   xAxis: categoryAxis(youthSessions.value.map(y => y.exercise_date), theme, 45),
-  yAxis: valueAxis(t('statistics.charts.participants'), theme),
+  yAxis: [
+    valueAxis(t('statistics.charts.participants'), theme),
+    valueAxis(t('statistics.charts.ratio'), theme, {position: 'right', splitLine: {show: false}})
+  ],
   series: [
     {name: t('statistics.charts.participants'), type: 'bar', data: youthSessions.value.map(y => y.participants)},
-    {name: t('statistics.charts.instructors'), type: 'bar', data: youthSessions.value.map(y => y.instructors)}
+    {name: t('statistics.charts.instructors'), type: 'bar', data: youthSessions.value.map(y => y.instructors)},
+    {
+      name: t('statistics.charts.ratio'), type: 'line', yAxisIndex: 1, symbolSize: theme.symbolSize,
+      data: youthSessions.value.map(y => y.instructors ? Math.round(y.participants / y.instructors * 10) / 10 : 0)
+    }
   ],
   legend: legend(theme, {top: 30}),
   grid: {left: '10%', right: '5%', bottom: '22%', top: 90},
@@ -533,14 +720,59 @@ const youthComparisonOption = computed(() => ({
   title: title(t('statistics.charts.youthComparison'), theme),
   tooltip: tooltip(theme),
   xAxis: categoryAxis(seriesYears.value, theme),
-  yAxis: [valueAxis(t('statistics.charts.youth'), theme), valueAxis(t('statistics.charts.participants'), theme)],
+  yAxis: [
+    valueAxis(t('statistics.charts.youth'), theme),
+    valueAxis(t('statistics.charts.participants'), theme),
+    valueAxis(t('statistics.charts.ratio'), theme, {position: 'right', offset: 55, splitLine: {show: false}})
+  ],
   series: [
     {name: t('statistics.charts.youth'), type: 'bar', data: yearlySeries.value.map(e => e.youth_count)},
-    {name: t('statistics.charts.participants'), type: 'line', yAxisIndex: 1, data: yearlySeries.value.map(e => e.youth_participants)}
+    {name: t('statistics.charts.participants'), type: 'line', yAxisIndex: 1, data: yearlySeries.value.map(e => e.youth_participants)},
+    {
+      name: t('statistics.charts.ratio'), type: 'line', yAxisIndex: 2, symbolSize: theme.symbolSize,
+      data: yearlySeries.value.map(e => e.youth_instructors
+          ? Math.round(e.youth_participants / e.youth_instructors * 10) / 10 : 0)
+    }
   ],
   legend: legend(theme, {top: 30}),
   grid: {left: '10%', right: '10%', top: 90}
 }))
+
+const youthRankingOption = computed(() => {
+  const instructors = combined.value.filter(m => m.youth_count > 0)
+      .sort((a, b) => b.youth_count - a.youth_count)
+  if (!instructors.length) return null
+  return {
+    ...chartBase(theme),
+    title: title(t('statistics.charts.youthRanking'), theme),
+    tooltip: tooltip(theme),
+    xAxis: categoryAxis(instructors.map(m => m.member_name), theme, 45),
+    yAxis: [valueAxis(t('statistics.charts.youth'), theme), valueAxis(t('statistics.charts.hours'), theme)],
+    series: [
+      {name: t('statistics.charts.youth'), type: 'bar', data: instructors.map(m => m.youth_count),
+        itemStyle: {color: '#fb923c'}},
+      {name: t('statistics.charts.hours'), type: 'bar', yAxisIndex: 1, data: instructors.map(m => m.youth_hours)}
+    ],
+    legend: legend(theme, {top: 30}),
+    grid: {left: '10%', right: '10%', bottom: '22%', top: 90},
+    dataZoom: zoom(theme)
+  }
+})
+
+type HoursColumn = 'member_name' | 'call_hours' | 'exercise_hours' | 'youth_hours' | 'total_hours'
+
+const hoursSort = ref<HoursColumn>('total_hours')
+
+const hoursRows = computed(() => [...combined.value].sort((a, b) => hoursSort.value === 'member_name'
+    ? a.member_name.localeCompare(b.member_name)
+    : (b[hoursSort.value] as number) - (a[hoursSort.value] as number)))
+
+const hoursTotals = computed(() => hoursRows.value.reduce((sum, row) => ({
+  call_hours: sum.call_hours + row.call_hours,
+  exercise_hours: sum.exercise_hours + row.exercise_hours,
+  youth_hours: sum.youth_hours + row.youth_hours,
+  total_hours: sum.total_hours + row.total_hours
+}), {call_hours: 0, exercise_hours: 0, youth_hours: 0, total_hours: 0}))
 
 const combinedOption = computed(() => {
   const top = combined.value.slice(0, 20)
@@ -598,220 +830,311 @@ function present() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl">{{ t('statistics.title') }}</h1>
-      <button @click="present" class="bg-orange-600 text-white px-4 py-2 rounded">{{ t('statistics.present') }}</button>
+  <div class="flex flex-col gap-8 pb-10">
+    <div class="flex items-end justify-between gap-6">
+      <div>
+        <div class="eyebrow">{{ t('statistics.eyebrow') }}</div>
+        <h1 class="headline text-4xl mt-1">{{ t('statistics.title') }}</h1>
+      </div>
+      <StandardButton @click="present">
+        <font-awesome-icon icon="fa-solid fa-display"/>
+        {{ t('statistics.present') }}
+      </StandardButton>
     </div>
 
-    <div class="flex flex-wrap gap-4 items-end p-4 border border-gray-700 rounded-lg">
+    <div class="card flex flex-wrap gap-5 items-end p-5">
       <div>
-        <label class="block text-sm text-gray-400">{{ t('common.year') }}</label>
-        <select v-model="selectedYear" class="bg-gray-800 text-white px-3 py-2 rounded">
+        <label class="label block mb-1.5">{{ t('common.year') }}</label>
+        <select v-model="selectedYear" class="field mt-2" style="width: auto">
           <option v-for="y in years" :value="y">{{ y }}</option>
         </select>
       </div>
       <div>
-        <label class="block text-sm text-gray-400">{{ t('statistics.yearsBack') }}</label>
-        <select v-model="yearsBack" class="bg-gray-800 text-white px-3 py-2 rounded">
+        <label class="label block mb-1.5">{{ t('statistics.yearsBack') }}</label>
+        <select v-model="yearsBack" class="field mt-2" style="width: auto">
           <option v-for="n in [3, 5, 10]" :value="n">{{ n }}</option>
         </select>
       </div>
       <div>
-        <label class="block text-sm text-gray-400">{{ t('statistics.rollingDays') }}</label>
-        <select v-model="rollingDays" class="bg-gray-800 text-white px-3 py-2 rounded">
+        <label class="label block mb-1.5">{{ t('statistics.rollingDays') }}</label>
+        <select v-model="rollingDays" class="field mt-2" style="width: auto">
           <option v-for="d in [7, 14, 30, 60, 90, 180, 365]" :value="d">{{ d }}</option>
         </select>
       </div>
       <div>
-        <label class="block text-sm text-gray-400">{{ t('common.from') }}</label>
-        <input type="date" v-model="startDate" class="bg-gray-800 text-white px-3 py-2 rounded"/>
+        <label class="label block mb-1.5">{{ t('common.from') }}</label>
+        <input type="date" v-model="startDate" class="field mt-2" style="width: auto"/>
       </div>
       <div>
-        <label class="block text-sm text-gray-400">{{ t('common.to') }}</label>
-        <input type="date" v-model="endDate" class="bg-gray-800 text-white px-3 py-2 rounded"/>
+        <label class="label block mb-1.5">{{ t('common.to') }}</label>
+        <input type="date" v-model="endDate" class="field mt-2" style="width: auto"/>
       </div>
       <div>
-        <label class="block text-sm text-gray-400">{{ t('statistics.member') }}</label>
-        <select v-model="selectedMember" class="bg-gray-800 text-white px-3 py-2 rounded">
+        <label class="label block mb-1.5">{{ t('statistics.rollingMetric.label') }}</label>
+        <select v-model="rollingMetric" class="field mt-2" style="width: auto">
+          <option value="count">{{ t('statistics.rollingMetric.count') }}</option>
+          <option value="hours">{{ t('statistics.rollingMetric.hours') }}</option>
+          <option value="percent">{{ t('statistics.rollingMetric.percent') }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="label block mb-1.5">{{ t('statistics.member') }}</label>
+        <select v-model="selectedMember" class="field mt-2" style="width: auto">
           <option value="">{{ t('common.all') }}</option>
           <option v-for="m in members" :value="m.name">{{ m.name }}</option>
         </select>
       </div>
     </div>
 
-    <div v-if="loading" class="text-center p-8">{{ t('common.loading') }}</div>
+    <div v-if="loading" class="p-12 text-center text-muted">{{ t('common.loading') }}</div>
 
     <template v-else>
-      <h2 class="text-xl text-gray-300">{{ t('statistics.sections.calls') }}</h2>
+      <h2 class="headline text-2xl mt-4 pt-4 border-t border-rule">{{ t('statistics.sections.calls') }}</h2>
 
-      <div v-if="yearSummary" class="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-orange-400">{{ yearSummary.call_count }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.summary.calls') }}</div>
-          <div class="text-xs text-gray-500">{{ deltaLabel(summaryDeltas.calls) }}</div>
+      <div v-if="yearSummary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ yearSummary.call_count }}</div>
+          <div class="label mt-1">{{ t('statistics.summary.calls') }}</div>
+          <div class="tabular text-xs text-muted mt-1">{{ deltaLabel(summaryDeltas.calls) }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-red-400">{{ yearSummary.aborted }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.summary.aborted') }}</div>
-          <div class="text-xs text-gray-500">{{ deltaLabel(summaryDeltas.aborted) }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular" style="color: var(--c-signal-ink)">{{ yearSummary.aborted }}</div>
+          <div class="label mt-1">{{ t('statistics.summary.aborted') }}</div>
+          <div class="tabular text-xs text-muted mt-1">{{ deltaLabel(summaryDeltas.aborted) }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-green-400">{{ yearSummary.count_call_hours }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.summary.callHours') }}</div>
-          <div class="text-xs text-gray-500">{{ deltaLabel(summaryDeltas.callHours) }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ yearSummary.count_call_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.summary.callHours') }}</div>
+          <div class="tabular text-xs text-muted mt-1">{{ deltaLabel(summaryDeltas.callHours) }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-blue-400">{{ yearSummary.count_crew_hours }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.summary.crewHours') }}</div>
-          <div class="text-xs text-gray-500">{{ deltaLabel(summaryDeltas.crewHours) }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ yearSummary.count_crew_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.summary.crewHours') }}</div>
+          <div class="tabular text-xs text-muted mt-1">{{ deltaLabel(summaryDeltas.crewHours) }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-cyan-400">{{ currentSeries?.avg_crew ?? '-' }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.callExtras.avgCrew') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ currentSeries?.avg_crew ?? '-' }}</div>
+          <div class="label mt-1">{{ t('statistics.callExtras.avgCrew') }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-purple-400">{{ yearSummary.half_hours_members ?? '-' }}%</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.summary.halfShare') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ yearSummary.half_hours_members ?? '-' }}%</div>
+          <div class="label mt-1">{{ t('statistics.summary.halfShare') }}</div>
         </div>
       </div>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div class="card p-5 md:p-6">
         <VChart :option="yearComparisonOption" style="height: 320px;" autoresize/>
       </div>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div class="card p-5 md:p-6">
         <VChart :option="dailyCallsChartOption" style="height: 350px;" autoresize/>
       </div>
 
-      <div v-if="memberDailyChartOption" class="bg-gray-900 rounded-lg p-4">
-        <VChart :option="memberDailyChartOption" style="height: 350px;" autoresize/>
+      <div v-if="memberRollingOption" class="card p-5 md:p-6">
+        <div class="flex justify-end">
+          <button @click="seriesVisible = !seriesVisible"
+                  class="text-sm text-muted hover:text-ink border border-rule rounded px-2 py-1">
+            {{ t('statistics.toggleSeries') }}
+          </button>
+        </div>
+        <VChart :option="memberRollingOption" style="height: 420px;" autoresize/>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-900 rounded-lg p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-5 md:p-6">
           <VChart :option="callGroupsPieOption" style="height: 350px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
+          <VChart :option="callGroupsBarOption" style="height: 350px;" autoresize/>
+        </div>
+        <div class="card p-5 md:p-6">
           <VChart :option="monthlyGroupsChartOption" style="height: 350px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
           <VChart :option="topSubjectsOption" style="height: 380px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
           <VChart :option="timeProfileOption" style="height: 380px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
           <VChart :option="durationsOption" style="height: 320px;" autoresize/>
         </div>
-        <div v-if="coverageOption" class="bg-gray-900 rounded-lg p-4">
+        <div v-if="coverageOption" class="card p-5 md:p-6">
           <VChart :option="coverageOption" style="height: 320px;" autoresize/>
         </div>
-        <div v-if="abortReasonsOption" class="bg-gray-900 rounded-lg p-4">
+        <div v-if="abortReasonsOption" class="card p-5 md:p-6">
           <VChart :option="abortReasonsOption" style="height: 320px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div v-if="shortageOption" class="card p-5 md:p-6">
+          <VChart :option="shortageOption" style="height: 320px;" autoresize/>
+        </div>
+        <div class="card p-5 md:p-6">
+          <VChart :option="strengthByHourOption" style="height: 320px;" autoresize/>
+        </div>
+        <div class="card p-5 md:p-6">
+          <VChart :option="groupsYearlyOption" style="height: 320px;" autoresize/>
+        </div>
+        <div class="card p-5 md:p-6">
           <VChart :option="crewComparisonOption" style="height: 320px;" autoresize/>
         </div>
       </div>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div class="card p-5 md:p-6">
         <VChart :option="hoursComparisonOption" style="height: 320px;" autoresize/>
       </div>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div v-if="callStrengthsOption" class="card p-5 md:p-6">
+        <VChart :option="callStrengthsOption" style="height: 380px;" autoresize/>
+      </div>
+
+      <div class="card p-5 md:p-6">
         <VChart :option="memberRankingChartOption" style="height: 400px;" autoresize/>
       </div>
 
-      <h2 class="text-xl text-gray-300">{{ t('statistics.sections.exercises') }}</h2>
+      <h2 class="headline text-2xl mt-4 pt-4 border-t border-rule">{{ t('statistics.sections.exercises') }}</h2>
 
       <div v-if="exerciseSummary" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-orange-400">{{ exerciseSummary.exercise_count }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.exerciseSummary.count') }}</div>
-          <div class="text-xs text-gray-500">{{ deltaLabel(delta(currentSeries?.exercise_count, previousYear?.exercise_count)) }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ exerciseSummary.exercise_count }}</div>
+          <div class="label mt-1">{{ t('statistics.exerciseSummary.count') }}</div>
+          <div class="tabular text-xs text-muted mt-1">{{ deltaLabel(delta(currentSeries?.exercise_count, previousYear?.exercise_count)) }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-green-400">{{ exerciseSummary.exercise_hours }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.exerciseSummary.hours') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ exerciseSummary.exercise_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.exerciseSummary.hours') }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-blue-400">{{ exerciseSummary.avg_attendance }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.exerciseSummary.avgAttendance') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ exerciseSummary.avg_attendance }}</div>
+          <div class="label mt-1">{{ t('statistics.exerciseSummary.avgAttendance') }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-purple-400">{{ exerciseSummary.crew_hours }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.exerciseSummary.crewHours') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ exerciseSummary.crew_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.exerciseSummary.crewHours') }}</div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-900 rounded-lg p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-5 md:p-6">
           <VChart :option="exerciseAttendanceOption" style="height: 350px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
           <VChart :option="exerciseComparisonOption" style="height: 350px;" autoresize/>
         </div>
       </div>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div class="card p-5 md:p-6">
         <VChart :option="exerciseRankingOption" style="height: 400px;" autoresize/>
       </div>
 
-      <h2 class="text-xl text-gray-300">{{ t('statistics.sections.youth') }}</h2>
+      <h2 class="headline text-2xl mt-4 pt-4 border-t border-rule">{{ t('statistics.sections.youth') }}</h2>
 
-      <div v-if="youthSummary" class="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-orange-400">{{ youthSummary.session_count }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.youthSummary.count') }}</div>
-          <div class="text-xs text-gray-500">{{ deltaLabel(delta(currentSeries?.youth_count, previousYear?.youth_count)) }}</div>
+      <div v-if="youthSummary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ youthSummary.session_count }}</div>
+          <div class="label mt-1">{{ t('statistics.youthSummary.count') }}</div>
+          <div class="tabular text-xs text-muted mt-1">{{ deltaLabel(delta(currentSeries?.youth_count, previousYear?.youth_count)) }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-green-400">{{ youthSummary.session_hours }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.youthSummary.hours') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ youthSummary.session_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.youthSummary.hours') }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-blue-400">{{ youthSummary.avg_participants }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.youthSummary.avgParticipants') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ youthSummary.avg_participants }}</div>
+          <div class="label mt-1">{{ t('statistics.youthSummary.avgParticipants') }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-cyan-400">{{ youthSummary.instructor_count }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.youthSummary.instructors') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ youthSummary.instructor_count }}</div>
+          <div class="label mt-1">{{ t('statistics.youthSummary.instructors') }}</div>
         </div>
-        <div class="bg-gray-800 rounded-lg p-4 text-center">
-          <div class="text-3xl font-bold text-purple-400">{{ youthSummary.instructor_hours }}</div>
-          <div class="text-sm text-gray-400">{{ t('statistics.youthSummary.instructorHours') }}</div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ youthSummary.instructor_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.youthSummary.instructorHours') }}</div>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-900 rounded-lg p-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-5 md:p-6">
           <VChart :option="youthSessionsOption" style="height: 350px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
           <VChart :option="youthComparisonOption" style="height: 350px;" autoresize/>
+        </div>
+        <div v-if="youthRankingOption" class="card p-5 md:p-6 md:col-span-2">
+          <VChart :option="youthRankingOption" style="height: 350px;" autoresize/>
         </div>
       </div>
 
-      <h2 class="text-xl text-gray-300">{{ t('statistics.sections.overall') }}</h2>
+      <h2 class="headline text-2xl mt-4 pt-4 border-t border-rule">{{ t('statistics.sections.overall') }}</h2>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ hoursTotals.call_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.table.calls') }}</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ hoursTotals.exercise_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.table.exercises') }}</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-3xl font-bold text-amber-400">{{ hoursTotals.youth_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.table.youth') }}</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="headline text-4xl tabular">{{ hoursTotals.total_hours }}</div>
+          <div class="label mt-1">{{ t('statistics.table.total') }}</div>
+        </div>
+      </div>
+
+      <div class="card p-5 md:p-6">
         <VChart :option="combinedOption" style="height: 420px;" autoresize/>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-gray-900 rounded-lg p-4">
+      <div class="card p-5 md:p-6 overflow-x-auto">
+        <div class="text-lg mb-3">{{ t('statistics.table.title') }}</div>
+        <table class="w-full text-sm">
+          <thead class="text-muted">
+          <tr>
+            <th class="text-left py-1 cursor-pointer" @click="hoursSort = 'member_name'">{{ t('statistics.table.name') }}</th>
+            <th class="text-right py-1 cursor-pointer" @click="hoursSort = 'call_hours'">{{ t('statistics.table.calls') }}</th>
+            <th class="text-right py-1 cursor-pointer" @click="hoursSort = 'exercise_hours'">{{ t('statistics.table.exercises') }}</th>
+            <th class="text-right py-1 cursor-pointer" @click="hoursSort = 'youth_hours'">{{ t('statistics.table.youth') }}</th>
+            <th class="text-right py-1 cursor-pointer" @click="hoursSort = 'total_hours'">{{ t('statistics.table.total') }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="row in hoursRows" :key="row.member_id" class="border-t border-rule">
+            <td class="py-1">{{ row.member_name }}</td>
+            <td class="text-right">{{ row.call_hours }}</td>
+            <td class="text-right">{{ row.exercise_hours }}</td>
+            <td class="text-right">{{ row.youth_hours }}</td>
+            <td class="text-right font-bold">{{ row.total_hours }}</td>
+          </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-rule font-bold">
+          <tr>
+            <td class="py-1">{{ t('statistics.table.sum') }}</td>
+            <td class="text-right">{{ hoursTotals.call_hours }}</td>
+            <td class="text-right">{{ hoursTotals.exercise_hours }}</td>
+            <td class="text-right">{{ hoursTotals.youth_hours }}</td>
+            <td class="text-right">{{ hoursTotals.total_hours }}</td>
+          </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card p-5 md:p-6">
           <VChart :option="turnoutOption" style="height: 320px;" autoresize/>
         </div>
-        <div class="bg-gray-900 rounded-lg p-4">
+        <div class="card p-5 md:p-6">
           <VChart :option="totalHoursComparisonOption" style="height: 320px;" autoresize/>
         </div>
       </div>
 
-      <div class="bg-gray-900 rounded-lg p-4">
+      <div class="card p-5 md:p-6">
         <VChart :option="membershipOption" style="height: 320px;" autoresize/>
       </div>
-      <p class="text-xs text-gray-500">{{ t('statistics.rosterCaveat') }}</p>
+      <p class="tabular text-xs text-muted mt-1">{{ t('statistics.rosterCaveat') }}</p>
     </template>
   </div>
 </template>

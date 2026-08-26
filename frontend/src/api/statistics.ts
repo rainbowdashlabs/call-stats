@@ -148,6 +148,7 @@ export interface YearlySeriesEntry {
     youth_count: number
     youth_hours: number
     youth_participants: number
+    youth_instructors: number
     roster_members: number
     participating_members: number
 }
@@ -155,6 +156,28 @@ export interface YearlySeriesEntry {
 export interface CallTimeProfileEntry {
     weekday: number
     hour: number
+    call_count: number
+}
+
+export interface CallStrength {
+    call_id: number
+    start: string
+    strength: number
+    leader: number
+    driver: number
+}
+
+export interface StrengthByHour {
+    hour: number
+    call_count: number
+    avg_strength: number
+    median_strength: number
+    p10_strength: number
+}
+
+export interface CallGroupYearCount {
+    year: number
+    group: string
     call_count: number
 }
 
@@ -341,6 +364,18 @@ export function getExerciseSessions(year: number): Promise<ExerciseSession[]> {
 
 export function getExerciseMemberStats(year: number): Promise<ExerciseMemberStats[]> {
     return fetchStatistics('exercise_member_stats', {year}, 'errors.statisticsExercises')
+}
+
+export function getCallStrengths(year: number): Promise<CallStrength[]> {
+    return fetchStatistics('call_strengths', {year}, 'errors.statisticsCallStrengths')
+}
+
+export function getStrengthByHour(year: number): Promise<StrengthByHour[]> {
+    return fetchStatistics('strength_by_hour', {year}, 'errors.statisticsStrengthByHour')
+}
+
+export function getCallGroupsYearly(year: number, yearsBack: number = 5): Promise<CallGroupYearCount[]> {
+    return fetchStatistics('call_groups_yearly', {year, years_back: yearsBack}, 'errors.statisticsCallGroupsYearly')
 }
 
 export function getYouthSummary(year: number): Promise<YouthSummary> {

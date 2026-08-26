@@ -1,9 +1,59 @@
+import {reactive} from 'vue'
 import {t} from '../i18n'
 
-export const SERIES_COLORS = ['#f97316', '#22c55e', '#38bdf8', '#a78bfa', '#facc15', '#f43f5e', '#2dd4bf', '#94a3b8']
+/**
+ * Categorical series colours, mid-lightness so they hold up on both the paper and the steel
+ * ground. Signal red is deliberately absent: red in this interface means something went wrong.
+ */
+export const SERIES_COLORS = ['#1f6f8b', '#c2703d', '#4e7a3f', '#7b5ea7', '#b03a5b', '#2e8c8c', '#8a6e2f', '#5c6775']
 
-export const HIGHLIGHT_COLOR = '#f97316'
-export const MUTED_COLOR = '#475569'
+function token(name: string, fallback: string): string {
+    if (typeof document === 'undefined') return fallback
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
+
+/**
+ * Fixed colours for the call groups, so a group reads the same in every chart that splits by
+ * group. Anything not listed falls back to the palette, picked deterministically from the name.
+ */
+const GROUP_COLORS: Record<string, string> = {
+    BRAND: '#dc2626',
+    TH: '#3b82f6',
+    RD: '#22c55e',
+    FR: '#86efac',
+    MISC: '#facc15'
+}
+
+export function groupColor(group: string): string {
+    const fixed = GROUP_COLORS[group.toUpperCase()]
+    if (fixed) return fixed
+    const hash = [...group].reduce((sum, char) => sum + char.charCodeAt(0), 0)
+    return SERIES_COLORS[hash % SERIES_COLORS.length]!
+}
+
+const GROUP_LABEL_KEYS: Record<string, string> = {
+    MISC: 'statistics.groups.misc'
+}
+
+/** The name a call group carries in the UI, which is not always what the database calls it. */
+export function groupLabel(group: string): string {
+    const key = GROUP_LABEL_KEYS[group.toUpperCase()]
+    return key ? t(key) : group
+}
+
+/** Abort reasons are stored as full sentences ("Kein Fahrzeug"); the charts only need the noun. */
+export function abortReasonLabel(reason: string): string {
+    return reason.replace(/^Kein(e|er)? /, '')
+}
+
+/** Whether an abort reason says that people or equipment were missing. */
+export function isShortageReason(reason: string): boolean {
+    return /^Kein(e|er)? /.test(reason)
+}
+
+/** The selected year in a comparison chart. Ink, not red — red is reserved for what went wrong. */
+export let HIGHLIGHT_COLOR = '#10141a'
+export let MUTED_COLOR = '#c3cad3'
 
 export interface ChartTheme {
     text: string
@@ -15,24 +65,42 @@ export interface ChartTheme {
     interactive: boolean
 }
 
-export const screenTheme: ChartTheme = {
-    text: '#fff',
-    muted: '#ccc',
+export const screenTheme: ChartTheme = reactive({
+    text: '#10141a',
+    muted: '#5c6775',
     fontSize: 12,
     titleSize: 18,
     lineWidth: 2,
     symbolSize: 4,
     interactive: true
-}
+})
 
+/** The deck always runs on the dark ground, whatever the app is set to. */
 export const presentationTheme: ChartTheme = {
-    text: '#fff',
+    text: '#edf0f3',
     muted: '#cbd5e1',
     fontSize: 20,
     titleSize: 34,
     lineWidth: 5,
     symbolSize: 10,
     interactive: false
+}
+
+/**
+ * ECharts wants literal colours, so the token values are read out of the document and pushed
+ * into the reactive screen theme whenever the app switches between light and dark.
+ */
+export function refreshChartTheme() {
+    screenTheme.text = token('--c-ink', '#10141a')
+    screenTheme.muted = token('--c-muted', '#5c6775')
+    HIGHLIGHT_COLOR = token('--c-ink', '#10141a')
+    MUTED_COLOR = token('--c-rule', '#dce1e7')
+}
+
+if (typeof document !== 'undefined') {
+    refreshChartTheme()
+    new MutationObserver(refreshChartTheme).observe(document.documentElement, {attributeFilter: ['data-theme']})
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshChartTheme)
 }
 
 export function title(text: string, theme: ChartTheme) {
@@ -55,7 +123,7 @@ export function valueAxis(name: string, theme: ChartTheme, extra: object = {}) {
         nameGap: theme.fontSize * 1.8,
         axisLabel: {color: theme.muted, fontSize: theme.fontSize},
         nameTextStyle: {color: theme.muted, fontSize: theme.fontSize},
-        splitLine: {lineStyle: {color: 'rgba(148, 163, 184, 0.2)'}},
+        splitLine: {lineStyle: {color: 'color-mix(in srgb, currentColor 0%, rgb(148 163 184 / 0.25))'}},
         ...extra
     }
 }
@@ -75,7 +143,7 @@ export function toolbox(theme: ChartTheme) {
         right: 10,
         iconStyle: {borderColor: theme.muted},
         feature: {
-            saveAsImage: {title: t('statistics.toolbox.save'), backgroundColor: '#111827'},
+            saveAsImage: {title: t('statistics.toolbox.save'), backgroundColor: token('--c-surface', '#ffffff')},
             dataView: {title: t('statistics.toolbox.data'), readOnly: true, lang: [t('statistics.toolbox.data'), t('common.close'), '']},
             restore: {title: t('statistics.toolbox.restore')}
         }

@@ -198,6 +198,7 @@ class YearlySeriesEntry(BaseModel):
     youth_count: int
     youth_hours: int
     youth_participants: int
+    youth_instructors: int
     roster_members: int
     participating_members: int
 
@@ -210,6 +211,28 @@ class CallTimeProfileEntry(BaseModel):
 
 class CallSubjectCount(BaseModel):
     name: str
+    group: str
+    call_count: int
+
+
+class CallStrength(BaseModel):
+    call_id: int
+    start: str
+    strength: int
+    leader: int
+    driver: int
+
+
+class StrengthByHour(BaseModel):
+    hour: int
+    call_count: int
+    avg_strength: float
+    median_strength: float
+    p10_strength: float
+
+
+class CallGroupYearCount(BaseModel):
+    year: int
     group: str
     call_count: int
 
@@ -330,6 +353,7 @@ def get_yearly_series(*, session: Session = Depends(get_session), year: int,
         aborted=r.aborted, avg_crew=float(r.avg_crew), exercise_count=r.exercise_count,
         exercise_hours=r.exercise_hours, exercise_attendance=r.exercise_attendance,
         youth_count=r.youth_count, youth_hours=r.youth_hours, youth_participants=r.youth_participants,
+        youth_instructors=r.youth_instructors,
         roster_members=r.roster_members, participating_members=r.participating_members
     ) for r in rows]
 
@@ -344,6 +368,28 @@ def get_call_time_profile(*, session: Session = Depends(get_session), year: int)
 def get_call_subjects(*, session: Session = Depends(get_session), year: int, limit: int = 10) -> list[CallSubjectCount]:
     rows = _call(session, "get_call_subjects", year=year, limit=limit)
     return [CallSubjectCount(name=r.name, group=r.group, call_count=r.call_count) for r in rows]
+
+
+@router.get("/call_strengths")
+def get_call_strengths(*, session: Session = Depends(get_session), year: int) -> list[CallStrength]:
+    rows = _call(session, "get_call_stats_by_year", year=year)
+    return [CallStrength(call_id=r.call_id, start=str(r.start), strength=r.strength,
+                         leader=r.leader, driver=r.driver) for r in rows]
+
+
+@router.get("/strength_by_hour")
+def get_strength_by_hour(*, session: Session = Depends(get_session), year: int) -> list[StrengthByHour]:
+    rows = _call(session, "get_call_strength_by_hour", year=year)
+    return [StrengthByHour(hour=r.hour, call_count=r.call_count, avg_strength=float(r.avg_strength),
+                           median_strength=float(r.median_strength),
+                           p10_strength=float(r.p10_strength)) for r in rows]
+
+
+@router.get("/call_groups_yearly")
+def get_call_groups_yearly(*, session: Session = Depends(get_session), year: int,
+                           years_back: int = DEFAULT_YEARS_BACK) -> list[CallGroupYearCount]:
+    rows = _call(session, "get_call_group_count_by_years", year_from=year - years_back + 1, year_to=year)
+    return [CallGroupYearCount(year=r.year, group=r.group, call_count=r.call_count) for r in rows]
 
 
 @router.get("/abort_reasons")

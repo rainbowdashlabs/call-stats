@@ -32,8 +32,8 @@ WITH
                 )
 SELECT
     d.day,
-    count(c.call_date)          AS call_count,
-    round(sum(c.hours))::BIGINT AS hours
+    count(c.call_date)                       AS call_count,
+    coalesce(round(sum(c.hours)), 0)::BIGINT AS call_hours
 FROM
     all_days d
         LEFT JOIN call_dates c
@@ -101,15 +101,15 @@ WITH
 SELECT
     day,
     c.call_count,
-    total.call_count AS call_count_total,
-    CASE WHEN total.call_count = 0 THEN 0
-                                   ELSE round(c.call_count / total.call_count::NUMERIC, 2) * 100
-    END              AS call_count_percentage,
+    coalesce(total.call_count, 0) AS call_count_total,
+    CASE WHEN coalesce(total.call_count, 0) = 0 THEN 0
+                                                ELSE round(c.call_count / total.call_count::NUMERIC, 2) * 100
+    END                           AS call_count_percentage,
     c.call_hours,
-    total.call_hours AS call_hours_total,
-    CASE WHEN total.call_hours = 0 THEN 0
-                                   ELSE round(c.call_hours / total.call_hours::NUMERIC, 2) * 100
-    END              AS call_hours_percentage
+    coalesce(total.call_hours, 0) AS call_hours_total,
+    CASE WHEN coalesce(total.call_hours, 0) = 0 THEN 0
+                                                ELSE round(c.call_hours / total.call_hours::NUMERIC, 2) * 100
+    END                           AS call_hours_percentage
 FROM
     rolling_counts c
         LEFT JOIN {{schema}}.get_daily_call_count_rolling(_year, _n_days) total
@@ -526,6 +526,7 @@ CREATE OR REPLACE FUNCTION {{schema}}.get_yearly_series(
         YOUTH_COUNT          BIGINT,
         YOUTH_HOURS          BIGINT,
         YOUTH_PARTICIPANTS   BIGINT,
+        YOUTH_INSTRUCTORS    BIGINT,
         ROSTER_MEMBERS       BIGINT,
         PARTICIPATING_MEMBERS BIGINT
     )
@@ -579,6 +580,15 @@ WITH
             {{schema}}.youthexercise y
         GROUP BY 1
           ),
+    youth_instructors AS (
+        SELECT
+            extract(YEAR FROM y.exercise_date)::INTEGER AS year,
+            count(DISTINCT my.member_id)                AS youth_instructors
+        FROM
+            {{schema}}.memberyouthexercise my
+                JOIN {{schema}}.youthexercise y ON y.id = my.youth_training_id
+        GROUP BY 1
+          ),
     roster AS (
         SELECT
             y.year,
@@ -620,6 +630,7 @@ SELECT
     coalesce(yo.youth_count, 0),
     coalesce(yo.youth_hours, 0),
     coalesce(yo.youth_participants, 0),
+    coalesce(yi.youth_instructors, 0),
     coalesce(r.roster_members, 0),
     coalesce(p.participating_members, 0)
 FROM
@@ -627,6 +638,7 @@ FROM
         LEFT JOIN call_stats c ON c.year = y.year
         LEFT JOIN exercises e ON e.year = y.year
         LEFT JOIN youth yo ON yo.year = y.year
+        LEFT JOIN youth_instructors yi ON yi.year = y.year
         LEFT JOIN roster r ON r.year = y.year
         LEFT JOIN participating p ON p.year = y.year
 ORDER BY y.year;
@@ -1189,4 +1201,83 @@ SELECT
 FROM
     {{schema}}.get_yearly_series(_year_from, _year_to) s
 ORDER BY s.year;
+$$;
+
+-- 29. Strength of the turnout by hour of day: average, median and the bad tenth
+CREATE OR REPLACE FUNCTION {{schema}}.get_call_strength_by_hour(_year INTEGER)
+    RETURNS TABLE (
+        HOUR            INTEGER,
+        CALL_COUNT      BIGINT,
+        AVG_STRENGTH    NUMERIC,
+        MEDIAN_STRENGTH NUMERIC,
+        P10_STRENGTH    NUMERIC
+    )
+    LANGUAGE sql
+    STABLE
+AS
+$$
+WITH
+    hours AS (
+        SELECT generate_series(0, 23) AS hour
+          ),
+    calls AS (
+        SELECT
+            extract(HOUR FROM start)::INTEGER AS hour,
+            strength
+        FROM
+            {{schema}}.get_call_stats_by_year(_year)
+          )
+SELECT
+    h.hour,
+    count(c.strength)                                                              AS call_count,
+    round(coalesce(avg(c.strength), 0), 2)                                         AS avg_strength,
+    round(coalesce(percentile_cont(0.5) WITHIN GROUP ( ORDER BY c.strength ), 0)::NUMERIC, 2) AS median_strength,
+    round(coalesce(percentile_cont(0.1) WITHIN GROUP ( ORDER BY c.strength ), 0)::NUMERIC, 2) AS p10_strength
+FROM
+    hours h
+        LEFT JOIN calls c
+        ON c.hour = h.hour
+GROUP BY h.hour
+ORDER BY h.hour;
+$$;
+
+-- 30. Call group counts across several years, one row per year and group
+CREATE OR REPLACE FUNCTION {{schema}}.get_call_group_count_by_years(
+    _year_from INTEGER,
+    _year_to INTEGER
+)
+    RETURNS TABLE (
+        YEAR       INTEGER,
+        "group"    TEXT,
+        CALL_COUNT BIGINT
+    )
+    LANGUAGE sql
+    STABLE
+AS
+$$
+WITH
+    years AS (
+        SELECT generate_series(_year_from, _year_to) AS year
+          ),
+    counts AS (
+        SELECT
+            y.year,
+            g.group,
+            g.call_count
+        FROM
+            years y, LATERAL {{schema}}.get_call_group_count_by_year(y.year) g
+          ),
+    groups AS (
+        SELECT DISTINCT "group" FROM counts
+          )
+SELECT
+    y.year,
+    g.group,
+    coalesce(c.call_count, 0) AS call_count
+FROM
+    years y
+        CROSS JOIN groups g
+        LEFT JOIN counts c
+        ON c.year = y.year AND c.group = g.group
+ORDER BY y.year, g.group;
 $$;
