@@ -48,7 +48,7 @@ def get_all(*, session: Session = Depends(get_session), filter_active: bool = Fa
     usage = _usage_by_member(session)
     return sorted([MemberUsage(id=m.id, name=m.name, joined=m.joined, retired=m.retired,
                               usage=usage.get(m.id, 0))
-                   for m in result], key=lambda x: x.name)
+                   for m in result], key=lambda x: x.name.split(" ")[-1])
 
 
 @router.get("/search")
