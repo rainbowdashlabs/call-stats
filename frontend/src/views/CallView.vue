@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {useRoute} from "vue-router";
-import {computed, onMounted, ref} from "vue";
+import {computed, nextTick, onMounted, ref, watch} from "vue";
 import {getCall, removeCall, updateCall} from "../api/call.ts";
 import {listSubjects} from "../api/subjects.ts";
 import {listMembers} from "../api/members.ts";
@@ -40,6 +40,14 @@ const editEnd = ref<ADateTime>(ADateTime.now())
 const editAdditional = ref(0)
 const editAbort = ref<string | null>(null)
 const editNote = ref<string | null>(null)
+let loadingEdit = false
+
+// Entering a new start moves the end there, so the duration or end time is set from that
+// point. Filling the form from the stored call must not do that.
+watch(() => editStart.value.toUnixTimestamp(), () => {
+  if (loadingEdit) return
+  editEnd.value = editStart.value.addMinutes(0)
+})
 
 async function load() {
   call.value = await getCall(id)
@@ -84,6 +92,7 @@ function pickOptions<T extends {id?: number}>(options: T[], stored: T[]): T[] {
 
 async function startEdit() {
   if (!call.value) return
+  loadingEdit = true
   const start = ADateTime.fromDate(new Date(call.value.start as string))
   const [subjects, members, reasons] = await Promise.all([
     listSubjects(false) as Promise<Subject[]>,
@@ -101,6 +110,8 @@ async function startEdit() {
   editAbort.value = call.value.abort_reason ?? null
   editNote.value = call.value.note ?? null
   editing.value = true
+  await nextTick()
+  loadingEdit = false
 }
 
 async function save() {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, ref} from "vue";
+import {computed, onMounted, onUnmounted, ref, watch} from "vue";
 import type {Subject} from "../../../interfaces/Subject.ts";
 import {listSubjects} from "../../../api/subjects.ts";
 import {listMembers} from "../../../api/members.ts";
@@ -47,6 +47,12 @@ const duration = computed({
   set: (minutes: number) => {
     end.value = start.value.addMinutes(minutes)
   }
+})
+
+// A call ends after it starts, so entering the start moves the end there and the
+// duration or end time is set from that point.
+watch(() => start.value.toUnixTimestamp(), () => {
+  end.value = start.value.addMinutes(0)
 })
 
 onMounted(async () => {
