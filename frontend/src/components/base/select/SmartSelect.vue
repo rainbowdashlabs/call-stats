@@ -38,6 +38,7 @@ function pick(item: any) {
   model.value = item
   inputValue.value = props.valueMapper(item)
   open.value = false
+  matches.value = []
   cursor.value = 0
 }
 
@@ -73,10 +74,16 @@ function scrollCursorIntoView() {
 }
 
 function accept(): boolean {
-  const item = highlighted()
+  // Only a visible suggestion may be taken; once the list is closed the choice is made and
+  // a stray Enter or Tab must not swap it for the first suggestion of the old list.
+  const item = open.value ? highlighted() : null
   if (item !== null) {
     pick(item)
     return true
+  }
+  if (!open.value && model.value !== undefined && model.value !== null
+      && props.valueMapper(model.value) === inputValue.value) {
+    return false
   }
   if (!props.strict && props.generator) {
     pick(props.generator(inputValue.value))
@@ -86,6 +93,8 @@ function accept(): boolean {
 }
 
 function onKeyDown(e: KeyboardEvent) {
+  // Ctrl+Enter submits the surrounding form and must not touch the selection.
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) return
   if (e.altKey && e.key >= '1' && e.key <= '9') {
     const item = matches.value[Number(e.key) - 1]
     if (item) {

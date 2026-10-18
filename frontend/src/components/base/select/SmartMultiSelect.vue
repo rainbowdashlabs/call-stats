@@ -75,6 +75,8 @@ function scrollCursorIntoView() {
 }
 
 function onKeyDown(e: KeyboardEvent) {
+  // Ctrl+Enter submits the surrounding form and must not add the highlighted suggestion.
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) return
   if (e.altKey && e.key >= '1' && e.key <= '9') {
     const item = matches.value[Number(e.key) - 1]
     if (item) {
@@ -90,13 +92,13 @@ function onKeyDown(e: KeyboardEvent) {
     e.preventDefault()
     moveCursor(-1)
   } else if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
-    const item = highlighted()
+    const item = open.value ? highlighted() : null
     if (item) {
       e.preventDefault()
       add(item)
     }
   } else if (e.key === 'Tab') {
-    const item = highlighted()
+    const item = open.value ? highlighted() : null
     if (item && term.value.trim()) add(item)
   } else if (e.key === 'Escape') {
     open.value = false
