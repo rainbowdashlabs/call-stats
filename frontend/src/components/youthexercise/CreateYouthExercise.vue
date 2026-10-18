@@ -11,12 +11,13 @@ import {addYouthExerciseMembers, createYouthExercise} from "../../api/youthExerc
 import {emitSuccess} from "../../events/bus.ts";
 import {t} from "../../i18n";
 import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
+import {loadLastDateTime, storeLastDateTime} from "../../scripts/lastDateTime.ts";
 
 const members = ref<Member[]>([])
 const selectedMembers = ref<Member[]>([])
 const subject = ref('')
-const date = ref<ADateTime>(ADateTime.now())
-const hours = ref<number>(3)
+const date = ref<ADateTime>(loadLastDateTime("youth-exercise"))
+const hours = ref<number>(2)
 const minutes = ref<number>(0)
 const participants = ref<number>(0)
 const submitting = ref(false)
@@ -39,10 +40,11 @@ async function submit() {
       participants: participants.value
     })
     await addYouthExerciseMembers(exercise, selectedMembers.value.map(e => e.id!))
+    storeLastDateTime("youth-exercise", date.value)
     emitSuccess(t('youth.created'))
     selectedMembers.value = []
     subject.value = ''
-    hours.value = 3
+    hours.value = 2
     minutes.value = 0
     participants.value = 0
   } finally {

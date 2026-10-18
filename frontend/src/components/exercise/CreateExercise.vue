@@ -11,11 +11,12 @@ import TextInput from "../base/input/TextInput.vue";
 import NumberPicker from "../base/datetime/NumberPicker.vue";
 import {t} from "../../i18n";
 import ConfirmButton from "../base/buttons/derivates/ConfirmButton.vue";
+import {loadLastDateTime, storeLastDateTime} from "../../scripts/lastDateTime.ts";
 
 const members = ref<Member[]>([])
 const selectedMembers = ref<Member[]>([])
 const subject = ref('')
-const date = ref<ADateTime>(ADateTime.now())
+const date = ref<ADateTime>(loadLastDateTime("exercise"))
 const hours = ref<number>(3)
 const minutes = ref<number>(0)
 const submitting = ref(false)
@@ -37,6 +38,7 @@ async function submit() {
       duration: minutes.value + hours.value * 60
     })
     await addExerciseMembers(exercise, selectedMembers.value.map(e => e.id!))
+    storeLastDateTime("exercise", date.value)
     emitSuccess(t('exercises.created'))
     selectedMembers.value = []
     subject.value = ''

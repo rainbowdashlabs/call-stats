@@ -14,6 +14,7 @@ import NumberPicker from "../../base/datetime/NumberPicker.vue";
 import SmartSelect from "../../base/select/SmartSelect.vue";
 import ConfirmButton from "../../base/buttons/derivates/ConfirmButton.vue";
 import {t} from "../../../i18n";
+import {loadLastDateTime, storeLastDateTime} from "../../../scripts/lastDateTime.ts";
 
 const SUGGESTED_SUBJECTS = 8
 const SUGGESTED_MEMBERS = 10
@@ -26,8 +27,8 @@ const selectedMembers = ref<Member[]>([])
 const abort_reason = ref<string | null>(null)
 const note = ref<string | null>(null)
 const additional = ref<number>(0)
-const start = ref<ADateTime>(ADateTime.now())
-const end = ref<ADateTime>(ADateTime.now())
+const start = ref<ADateTime>(loadLastDateTime("call-start"))
+const end = ref<ADateTime>(loadLastDateTime("call-end"))
 const submitting = ref(false)
 
 const subjectSelect = ref<InstanceType<typeof SmartMultiSelect> | null>(null)
@@ -111,6 +112,8 @@ async function submit() {
     }
 
     await createCall(call)
+    storeLastDateTime("call-start", start.value)
+    storeLastDateTime("call-end", end.value)
     emitSuccess(t('calls.created'))
     emitCallCreated()
     chosenSubjects.value = []
@@ -118,8 +121,6 @@ async function submit() {
     abort_reason.value = null
     note.value = null
     additional.value = 0
-    start.value = ADateTime.now()
-    end.value = ADateTime.now()
     subjectSelect.value?.focus()
   } finally {
     submitting.value = false
