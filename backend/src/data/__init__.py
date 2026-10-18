@@ -4,6 +4,9 @@ import re
 
 import sqlalchemy
 from sqlmodel import create_engine, SQLModel, Session
+
+from data.timezone import APP_TIMEZONE_NAME
+
 log = logging.getLogger(__name__)
 
 def new_engine():
@@ -19,7 +22,10 @@ def new_engine():
 
     connection_string = f"postgresql+psycopg://{username}:{password}@{host}:{port}/{database}?"
     log.info(f"Connecting to database {database} at {host}:{port}")
-    return create_engine(connection_string, echo=echo, connect_args={'options': '-c search_path={}'.format(schema)})
+    # The session zone only matters for the statistics, which cut TIMESTAMPTZ values into
+    # the brigade's local days and hours; everything else is an instant.
+    options = f"-c search_path={schema} -c timezone={APP_TIMEZONE_NAME}"
+    return create_engine(connection_string, echo=echo, connect_args={'options': options})
 
 
 engine = new_engine()
@@ -61,14 +67,30 @@ SQLModel.metadata.create_all(engine)
 _SCHEMA_UPGRADES = [
     "ALTER TABLE {schema}.subject ADD COLUMN IF NOT EXISTS archived BOOLEAN NOT NULL DEFAULT false",
     "ALTER TABLE {schema}.member ADD COLUMN IF NOT EXISTS joined DATE",
+    # Call times used to be naive timestamps holding UTC wall-clock time (the backend ran with
+    # a UTC clock and inserted UTC instants). Reading them back as UTC loses nothing and gives
+    # the instants a type that says what they are. Guarded by the column type, so it runs once.
+    """
+    DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns
+                   WHERE table_schema = '{schema}' AND table_name = 'call'
+                     AND column_name = 'start' AND data_type = 'timestamp without time zone') THEN
+            ALTER TABLE {schema}.call
+                ALTER COLUMN start TYPE TIMESTAMPTZ USING start AT TIME ZONE 'UTC',
+                ALTER COLUMN "end" TYPE TIMESTAMPTZ USING "end" AT TIME ZONE 'UTC';
+        END IF;
+    END $$;
+    """,
 ]
 """Statements that bring an older database up to the current entities.
 
 `create_all` only creates tables that do not exist yet, so a column added to an entity never
 reaches a database that already has the table. Every statement here runs on every startup and
-must therefore be idempotent and additive — `ADD COLUMN IF NOT EXISTS`, never a drop, a rename
-or anything that can lose data. Anything that cannot be expressed that way does not belong
-here and has to be applied by hand against a dump first.
+must therefore be idempotent and lossless — `ADD COLUMN IF NOT EXISTS`, a guarded type change
+that keeps every value, never a drop, a rename or anything that can lose data. Anything that
+cannot be expressed that way does not belong here and has to be applied by hand against a
+dump first.
 """
 
 with engine.connect() as conn:

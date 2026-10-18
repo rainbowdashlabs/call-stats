@@ -5,10 +5,11 @@ from sqlmodel import Session
 from sqlmodel import select
 
 from data import get_session
-from entities.call import Call, FullCall, CallSubject
+from entities.call import Call, FullCall, CallSubject, UpdateCall
 from entities.member import SimpleMember
 from services.extra.errors import NotFoundError
 from services.member import get_by_id as get_member_by_id
+from services.subject import get_by_id as get_subject_by_id
 
 router = APIRouter(prefix="/call",
                    tags=["calls"])
@@ -56,13 +57,35 @@ def get_by_id(*, session: Session = Depends(get_session), id: int) -> FullCall:
 
 
 @router.patch("")
-def update(*, session: Session = Depends(get_session), new: Call):
-    old = _get_call_by_id(session=session, id=new.id)
-    if old.start != new.start:
-        raise ValueError("Startzeitpunkt kann nicht geändert werden")
-    session.add(new)
+def update(*, session: Session = Depends(get_session), call: UpdateCall) -> FullCall:
+    existing = _get_call_by_id(session=session, id=call.id)
+    existing.start = call.start
+    existing.end = call.end
+    existing.additional = call.additional
+    existing.abort_reason = call.abort_reason
+    existing.note = call.note
+
+    subject_ids = list(dict.fromkeys(call.subjects))
+    for subject_id in subject_ids:
+        get_subject_by_id(session=session, id=subject_id)
+    links = {link.subject_id: link for link in existing.subjects}
+    for subject_id, link in links.items():
+        if subject_id not in subject_ids:
+            session.delete(link)
+    for order, subject_id in enumerate(subject_ids):
+        link = links.get(subject_id)
+        if link:
+            link.subject_order = order
+        else:
+            session.add(CallSubject(call_id=existing.id, subject_id=subject_id, subject_order=order))
+
+    member_ids = list(dict.fromkeys(call.members))
+    existing.members = [get_member_by_id(session=session, id=member_id) for member_id in member_ids]
+
+    session.add(existing)
     session.commit()
-    session.refresh(new)
+    session.expire_all()
+    return FullCall.convert(_get_call_by_id(session=session, id=call.id))
 
 
 @router.delete("/{id}")

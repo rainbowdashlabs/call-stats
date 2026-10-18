@@ -12,6 +12,18 @@ export interface CreateCall {
 }
 
 
+export interface UpdateCall {
+    id: number
+    subjects: number[]
+    start: number
+    end: number
+    additional: number
+    abort_reason?: string | null
+    note?: string | null
+    members: number[]
+}
+
+
 export interface FullCall {
     id: number
     subjects: SimpleSubject[]

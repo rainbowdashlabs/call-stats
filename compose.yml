@@ -10,6 +10,7 @@ services:
       DB_SCHEMA: call_stats
       DB_PORT: 5432
       DB_HOST: database
+      APP_TIMEZONE: ${APP_TIMEZONE:-Europe/Berlin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       MEMBER_PASSWORD: ${MEMBER_PASSWORD:-member}
       TOKEN_SECRET: ${TOKEN_SECRET:-change-me-in-production}

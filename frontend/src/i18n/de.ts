@@ -90,6 +90,8 @@ export default {
         noteSaved: 'Notiz gespeichert.',
         abortLabel: 'Abbruchgrund',
         abortSaved: 'Abbruchgrund gespeichert.',
+        editTitle: 'Einsatz bearbeiten',
+        saved: 'Einsatz gespeichert.',
         duration: 'Dauer (Min.)',
         lastCrew: 'Letzte Mannschaft',
         lastCrewEmpty: 'Kein vorheriger Einsatz gefunden.',

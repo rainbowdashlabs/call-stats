@@ -2,13 +2,23 @@
 import {useRoute} from "vue-router";
 import {computed, onMounted, ref} from "vue";
 import {getCall, removeCall, updateCall} from "../api/call.ts";
+import {listSubjects} from "../api/subjects.ts";
+import {listMembers} from "../api/members.ts";
+import {listAbortReasons} from "../api/calls.ts";
 import type {FullCall} from "../interfaces/Call.ts";
+import type {Subject} from "../interfaces/Subject.ts";
+import type {Member} from "../interfaces/Member.ts";
 import ErrorButton from "../components/base/buttons/derivates/ErrorButton.vue";
+import ConfirmButton from "../components/base/buttons/derivates/ConfirmButton.vue";
 import StandardButton from "../components/base/buttons/StandardButton.vue";
 import {RouterLink} from "vue-router";
-import SimpleButton from "../components/base/buttons/SimpleButton.vue";
+import SmartMultiSelect from "../components/base/select/SmartMultiSelect.vue";
+import SmartSelect from "../components/base/select/SmartSelect.vue";
+import DateTimePicker from "../components/base/datetime/DateTimePicker.vue";
+import TimePicker from "../components/base/datetime/TimePicker.vue";
+import NumberPicker from "../components/base/datetime/NumberPicker.vue";
 import router from "../router";
-import {dayPosition, formatDate, formatDuration} from "../scripts/datetime.ts";
+import {ADateTime, dayPosition, formatDate, formatDuration} from "../scripts/datetime.ts";
 import {emitSuccess} from "../events/bus.ts";
 import {isAdmin} from "../auth.ts";
 import {t} from "../i18n";
@@ -18,10 +28,18 @@ const route = useRoute()
 const id: number = Number(route.params.id!)
 const call = ref<FullCall | null>(null)
 
-const editingNote = ref(false)
-const editingAbort = ref(false)
-const editNote = ref('')
-const editAbort = ref('')
+const editing = ref(false)
+const saving = ref(false)
+const subjectOptions = ref<Subject[]>([])
+const memberOptions = ref<Member[]>([])
+const abortReasons = ref<String[]>([])
+const editSubjects = ref<Subject[]>([])
+const editMembers = ref<Member[]>([])
+const editStart = ref<ADateTime>(ADateTime.now())
+const editEnd = ref<ADateTime>(ADateTime.now())
+const editAdditional = ref(0)
+const editAbort = ref<string | null>(null)
+const editNote = ref<string | null>(null)
 
 async function load() {
   call.value = await getCall(id)
@@ -38,44 +56,76 @@ async function remove() {
   await router.push({name: "Calls"})
 }
 
-function startEditNote() {
-  editNote.value = call.value?.note ?? ''
-  editingNote.value = true
+const canSave = computed(() => editSubjects.value.length > 0 && editMembers.value.length > 0 && !saving.value)
+
+const editDuration = computed({
+  get: () => {
+    const minutes = (editEnd.value.hour * 60 + editEnd.value.minute) - (editStart.value.hour * 60 + editStart.value.minute)
+    return minutes < 0 ? minutes + 24 * 60 : minutes
+  },
+  set: (minutes: number) => {
+    editEnd.value = editStart.value.addMinutes(minutes)
+  }
+})
+
+/** Picks the option object for each stored item so the selects can tell chosen from available. */
+function pickOptions<T extends {id?: number}>(options: T[], stored: T[]): T[] {
+  const chosen: T[] = []
+  for (const item of stored) {
+    let option = options.find(o => o.id === item.id)
+    if (!option) {
+      option = item
+      options.push(item)
+    }
+    chosen.push(option)
+  }
+  return chosen
 }
 
-async function saveNote() {
+async function startEdit() {
   if (!call.value) return
-  await updateCall({
-    id: call.value.id,
-    start: call.value.start,
-    end: call.value.end,
-    additional: call.value.additional,
-    note: editNote.value || null,
-    abort_reason: call.value.abort_reason
-  })
-  call.value.note = editNote.value || null
-  editingNote.value = false
-  emitSuccess(t('calls.noteSaved'))
+  const start = ADateTime.fromDate(new Date(call.value.start as string))
+  const [subjects, members, reasons] = await Promise.all([
+    listSubjects(false) as Promise<Subject[]>,
+    listMembers(true, start.toUnixTimestamp()),
+    listAbortReasons()
+  ])
+  subjectOptions.value = subjects
+  memberOptions.value = members
+  abortReasons.value = reasons
+  editSubjects.value = pickOptions(subjectOptions.value, call.value.subjects as Subject[])
+  editMembers.value = pickOptions(memberOptions.value, call.value.members as Member[])
+  editStart.value = start
+  editEnd.value = ADateTime.fromDate(new Date(call.value.end as string))
+  editAdditional.value = call.value.additional
+  editAbort.value = call.value.abort_reason ?? null
+  editNote.value = call.value.note ?? null
+  editing.value = true
 }
 
-function startEditAbort() {
-  editAbort.value = call.value?.abort_reason ?? ''
-  editingAbort.value = true
-}
-
-async function saveAbort() {
-  if (!call.value) return
-  await updateCall({
-    id: call.value.id,
-    start: call.value.start,
-    end: call.value.end,
-    additional: call.value.additional,
-    note: call.value.note,
-    abort_reason: editAbort.value || null
-  })
-  call.value.abort_reason = editAbort.value || null
-  editingAbort.value = false
-  emitSuccess(t('calls.abortSaved'))
+async function save() {
+  if (!call.value || !canSave.value) return
+  saving.value = true
+  try {
+    let end = editEnd.value.applyDate(editStart.value)
+    if (editStart.value.toUnixTimestamp() > end.toUnixTimestamp()) {
+      end = end.nextDay()
+    }
+    call.value = await updateCall({
+      id: call.value.id,
+      subjects: editSubjects.value.map(e => e.id!),
+      start: editStart.value.toUnixTimestamp(),
+      end: end.toUnixTimestamp(),
+      additional: editAdditional.value,
+      members: editMembers.value.map(e => e.id!),
+      note: editNote.value || null,
+      abort_reason: editAbort.value || null
+    })
+    editing.value = false
+    emitSuccess(t('calls.saved'))
+  } finally {
+    saving.value = false
+  }
 }
 
 const subjects = computed(() => {
@@ -111,6 +161,10 @@ onMounted(load)
         </div>
       </div>
       <div v-if="isAdmin()" class="flex gap-2 shrink-0">
+        <StandardButton v-if="!editing" @click="startEdit">
+          <font-awesome-icon icon="fa-solid fa-pen"/>
+          {{ t('common.edit') }}
+        </StandardButton>
         <StandardButton v-if="confirmDelete" @click="confirmDelete = false">{{ t('common.cancel') }}</StandardButton>
         <ErrorButton @click="remove">
           <font-awesome-icon icon="fa-solid fa-trash"/>
@@ -152,43 +206,69 @@ onMounted(load)
       </div>
     </div>
 
-    <section class="card p-5 flex flex-col gap-4">
+    <section v-if="editing" class="card p-5 flex flex-col gap-4">
+      <h2 class="headline text-xl">{{ t('calls.editTitle') }}</h2>
+
       <div class="flex flex-col gap-2">
-        <span class="label">{{ t('calls.abortLabel') }}</span>
-        <div v-if="!editingAbort" class="flex items-center gap-2">
-          <span :class="call.abort_reason ? 'text-ink' : 'text-faint'">{{ call.abort_reason ?? '—' }}</span>
-          <SimpleButton v-if="isAdmin()" @click="startEditAbort" :aria-label="t('common.edit')">
-            <font-awesome-icon icon="fa-solid fa-pen"/>
-          </SimpleButton>
+        <span class="label">{{ t('common.subject') }}</span>
+        <SmartMultiSelect v-model="editSubjects" :options="subjectOptions"
+                          :value-mapper="(e:Subject) => e.name" :key-mapper="(e: Subject) => e.id!"
+                          :weight-mapper="(e:Subject) => e.usage ?? 0" :hint-mapper="(e:Subject) => e.group"/>
+      </div>
+
+      <div class="flex flex-wrap items-end gap-6">
+        <div class="flex flex-col gap-2">
+          <span class="label">{{ t('common.start') }}</span>
+          <DateTimePicker v-model="editStart"/>
         </div>
-        <div v-else class="flex items-center gap-2">
-          <input type="text" v-model="editAbort" class="field" style="max-width: 22rem"/>
-          <SimpleButton @click="saveAbort" :aria-label="t('common.save')">
-            <font-awesome-icon icon="fa-solid fa-check"/>
-          </SimpleButton>
-          <SimpleButton @click="editingAbort = false" :aria-label="t('common.cancel')">
-            <font-awesome-icon icon="fa-solid fa-xmark"/>
-          </SimpleButton>
+        <div class="flex flex-col gap-2">
+          <span class="label">{{ t('common.end') }}</span>
+          <TimePicker v-model="editEnd"/>
+        </div>
+        <div class="flex flex-col gap-2">
+          <span class="label">{{ t('calls.duration') }}</span>
+          <NumberPicker :max="1439" :min="0" v-model="editDuration"/>
+        </div>
+        <div class="flex flex-col gap-2">
+          <span class="label">{{ t('calls.followUp') }}</span>
+          <NumberPicker :max="1000" :min="0" v-model="editAdditional"/>
         </div>
       </div>
 
       <div class="flex flex-col gap-2">
+        <span class="label">{{ t('common.members') }} · <span class="tabular text-ink">{{ editMembers.length }}</span></span>
+        <SmartMultiSelect v-model="editMembers" :options="memberOptions"
+                          :value-mapper="(e:Member) => e.name" :key-mapper="(e:Member) => e.id"
+                          :weight-mapper="(e:Member) => e.usage ?? 0"/>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2">
+          <span class="label">{{ t('calls.abortReason') }}</span>
+          <SmartSelect :key-mapper="(v) => v" :value-mapper="(k) => k as string"
+                       :options="abortReasons" :generator="(v:string) => v || null" v-model="editAbort"/>
+        </div>
+        <div class="flex flex-col gap-2">
+          <span class="label">{{ t('common.note') }}</span>
+          <input v-model="editNote" type="text" class="field"/>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <ConfirmButton :disabled="!canSave" @click="save">{{ t('common.save') }}</ConfirmButton>
+        <StandardButton @click="editing = false">{{ t('common.cancel') }}</StandardButton>
+      </div>
+    </section>
+
+    <section v-else class="card p-5 flex flex-col gap-4">
+      <div class="flex flex-col gap-2">
+        <span class="label">{{ t('calls.abortLabel') }}</span>
+        <span :class="call.abort_reason ? 'text-ink' : 'text-faint'">{{ call.abort_reason ?? '—' }}</span>
+      </div>
+
+      <div class="flex flex-col gap-2">
         <span class="label">{{ t('calls.note') }}</span>
-        <div v-if="!editingNote" class="flex items-center gap-2">
-          <span :class="call.note ? 'text-ink' : 'text-faint'">{{ call.note ?? '—' }}</span>
-          <SimpleButton v-if="isAdmin()" @click="startEditNote" :aria-label="t('common.edit')">
-            <font-awesome-icon icon="fa-solid fa-pen"/>
-          </SimpleButton>
-        </div>
-        <div v-else class="flex items-center gap-2">
-          <input type="text" v-model="editNote" class="field" style="max-width: 22rem"/>
-          <SimpleButton @click="saveNote" :aria-label="t('common.save')">
-            <font-awesome-icon icon="fa-solid fa-check"/>
-          </SimpleButton>
-          <SimpleButton @click="editingNote = false" :aria-label="t('common.cancel')">
-            <font-awesome-icon icon="fa-solid fa-xmark"/>
-          </SimpleButton>
-        </div>
+        <span :class="call.note ? 'text-ink' : 'text-faint'">{{ call.note ?? '—' }}</span>
       </div>
     </section>
 

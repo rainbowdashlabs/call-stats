@@ -1,4 +1,4 @@
-import type {FullCall} from "../interfaces/Call.ts";
+import type {FullCall, UpdateCall} from "../interfaces/Call.ts";
 import {emitError} from "../events/bus.ts";
 import {getHttpClient} from "./http.ts";
 import {t} from '../i18n'
@@ -15,9 +15,10 @@ export async function getCall(id: number): Promise<FullCall> {
     }
 }
 
-export async function updateCall(call: {id: number, start: number | string, end: number | string, additional: number, note?: string | null, abort_reason?: string | null}): Promise<void> {
+export async function updateCall(call: UpdateCall): Promise<FullCall> {
     try {
-        await http.patch('/api/call', call)
+        const {data} = await http.patch<FullCall>('/api/call', call)
+        return data
     } catch (e) {
         emitError(e, {message: t('errors.callUpdate')})
         throw e

@@ -2,6 +2,8 @@ from datetime import datetime, date
 
 from sqlalchemy import TypeDecorator, Date as SQLDate
 
+from data.timezone import to_local_date
+
 class EpochDate(TypeDecorator):
     impl = SQLDate
     cache_ok = True
@@ -10,7 +12,7 @@ class EpochDate(TypeDecorator):
         if value is None:
             return value
         if isinstance(value, (int, float)):
-            return datetime.fromtimestamp(value).date()
+            return to_local_date(value)
         if isinstance(value, str):
             # Handle ISO date strings like "2024-01-15"
             return datetime.fromisoformat(value).date()

@@ -48,6 +48,7 @@ ADMIN_PASSWORD=... MEMBER_PASSWORD=... TOKEN_SECRET=... docker compose up -d
 | `DB_USERNAME`, `DB_PASSWORD` | `postgres`, `postgres` | Database credentials |
 | `DB_DATABASE` | `callstats` | Database name |
 | `DB_SCHEMA` | `call_stats` | Schema the app creates and works in |
+| `APP_TIMEZONE` | `Europe/Berlin` | Zone the statistics group days and hours by. Call times are stored in UTC and shown in the browser's zone |
 | `ADMIN_PASSWORD` | `admin` | Password for the admin account |
 | `MEMBER_PASSWORD` | `member` | Password for the member account |
 | `TOKEN_SECRET` | `change-me-in-production` | HMAC secret for login tokens |

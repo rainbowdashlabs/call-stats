@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+from sqlalchemy import DateTime
 from sqlmodel import SQLModel, Field, Relationship
+
+from data.timezone import to_utc
 
 mapper = lambda data: data["end"] - data["start"]
 
@@ -32,8 +35,8 @@ class Subject(SQLModel, table=True):
 class Call(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     subjects: list[CallSubject] = Relationship(back_populates="call", cascade_delete=True)
-    start: datetime = Field(default=None, index=True)
-    end: datetime = Field(default=None, index=True)
+    start: datetime = Field(default=None, index=True, sa_type=DateTime(timezone=True))
+    end: datetime = Field(default=None, index=True, sa_type=DateTime(timezone=True))
     additional: int = Field(default=0)
     abort_reason: Optional[str] = Field(default=None)
     note: Optional[str] = Field(default=None)
@@ -48,6 +51,28 @@ class CreateCall(BaseModel):
     abort_reason: Optional[str] = None
     note: Optional[str] = None
     members: list[int]
+
+    @field_validator("start", "end")
+    @classmethod
+    def _utc(cls, value: datetime) -> datetime:
+        return to_utc(value)
+
+
+class UpdateCall(BaseModel):
+    """Every editable part of a call. Subjects and members replace the stored ones in the given order."""
+    id: int
+    subjects: list[int]
+    start: datetime
+    end: datetime
+    additional: int = 0
+    abort_reason: Optional[str] = None
+    note: Optional[str] = None
+    members: list[int]
+
+    @field_validator("start", "end")
+    @classmethod
+    def _utc(cls, value: datetime) -> datetime:
+        return to_utc(value)
 
 
 class SimpleSubject(BaseModel):
