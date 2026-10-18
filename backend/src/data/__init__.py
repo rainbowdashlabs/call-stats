@@ -70,16 +70,81 @@ _SCHEMA_UPGRADES = [
     # Call times used to be naive timestamps holding UTC wall-clock time (the backend ran with
     # a UTC clock and inserted UTC instants). Reading them back as UTC loses nothing and gives
     # the instants a type that says what they are. Guarded by the column type, so it runs once.
+    # Views built on the call table by hand are not managed here, but PostgreSQL refuses to
+    # change a column they use, so they are dropped first and recreated from their saved
+    # definitions once the columns have their new type.
     """
     DO $$
+    DECLARE
+        dependents OID[];
+        pending    TEXT[];
+        retry      TEXT[];
+        statement  TEXT;
+        progressed BOOLEAN;
+        rel        RECORD;
     BEGIN
-        IF EXISTS (SELECT 1 FROM information_schema.columns
-                   WHERE table_schema = '{schema}' AND table_name = 'call'
-                     AND column_name = 'start' AND data_type = 'timestamp without time zone') THEN
-            ALTER TABLE {schema}.call
-                ALTER COLUMN start TYPE TIMESTAMPTZ USING start AT TIME ZONE 'UTC',
-                ALTER COLUMN "end" TYPE TIMESTAMPTZ USING "end" AT TIME ZONE 'UTC';
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                       WHERE table_schema = '{schema}' AND table_name = 'call'
+                         AND column_name = 'start' AND data_type = 'timestamp without time zone') THEN
+            RETURN;
         END IF;
+
+        WITH RECURSIVE built_on AS (
+            SELECT r.ev_class AS oid
+            FROM pg_depend d
+            JOIN pg_rewrite r ON r.oid = d.objid
+            WHERE d.classid = 'pg_rewrite'::regclass
+              AND d.refclassid = 'pg_class'::regclass
+              AND d.refobjid = '{schema}.call'::regclass
+              AND r.ev_class <> d.refobjid
+            UNION
+            SELECT r.ev_class
+            FROM built_on b
+            JOIN pg_depend d ON d.classid = 'pg_rewrite'::regclass
+                            AND d.refclassid = 'pg_class'::regclass
+                            AND d.refobjid = b.oid
+            JOIN pg_rewrite r ON r.oid = d.objid
+            WHERE r.ev_class <> b.oid
+        )
+        SELECT coalesce(array_agg(DISTINCT oid), ARRAY[]::OID[]) INTO dependents FROM built_on;
+
+        SELECT coalesce(array_agg(
+                   'CREATE ' || CASE c.relkind WHEN 'm' THEN 'MATERIALIZED VIEW ' ELSE 'VIEW ' END
+                   || quote_ident(n.nspname) || '.' || quote_ident(c.relname)
+                   || ' AS ' || pg_get_viewdef(c.oid)), ARRAY[]::TEXT[])
+        INTO pending
+        FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.oid = ANY (dependents) AND c.relkind IN ('v', 'm');
+
+        FOR rel IN SELECT c.relkind, quote_ident(n.nspname) || '.' || quote_ident(c.relname) AS name
+                   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+                   WHERE c.oid = ANY (dependents) AND c.relkind IN ('v', 'm') LOOP
+            EXECUTE 'DROP ' || CASE rel.relkind WHEN 'm' THEN 'MATERIALIZED VIEW' ELSE 'VIEW' END
+                    || ' IF EXISTS ' || rel.name || ' CASCADE';
+        END LOOP;
+
+        ALTER TABLE {schema}.call
+            ALTER COLUMN start TYPE TIMESTAMPTZ USING start AT TIME ZONE 'UTC',
+            ALTER COLUMN "end" TYPE TIMESTAMPTZ USING "end" AT TIME ZONE 'UTC';
+
+        -- Views may build on each other, so keep going until every one has what it needs.
+        WHILE cardinality(pending) > 0 LOOP
+            retry := ARRAY[]::TEXT[];
+            progressed := false;
+            FOREACH statement IN ARRAY pending LOOP
+                BEGIN
+                    EXECUTE statement;
+                    progressed := true;
+                EXCEPTION WHEN undefined_table THEN
+                    retry := retry || statement;
+                END;
+            END LOOP;
+            pending := retry;
+            IF cardinality(pending) > 0 AND NOT progressed THEN
+                RAISE EXCEPTION USING MESSAGE = 'Could not recreate views after changing call times: '
+                    || array_to_string(pending, chr(10));
+            END IF;
+        END LOOP;
     END $$;
     """,
 ]
